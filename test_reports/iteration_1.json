@@ -1,0 +1,30 @@
+{
+  "summary": "Full backend + frontend E2E test of Sat sales assumptions tool. All 4 backend AI endpoint tests pass (suggest-catalog with 12 units, suggest-assumptions 12 & 6 months). Full wizard flow tested end-to-end: landing -> profile (industry validation) -> catalog (comma/newline splitting, catalog-count) -> >10 items triggers category-group-prompt, enable-categories inserts 'categories' step-pill -> pricing (Continue blocked until all prices > 0) -> volumes (base + flat/growth/q4 patterns fill 12 months) -> costs (running-margin & per-item margin updates instantly) -> review (arithmetic correct: revenue=$12,644 cost=$5,855 margin=53.7% matches (R-C)/R) -> /results shows sales & cost tables. Dynamic recalculation verified (edit sales-units cell -> sales-grand-total, gross-margin-total and header-margin all update). CSV export (both sales & cost) triggers downloads. Session persists across reload, reset-session-btn clears localStorage.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Wizard / Profile step", "issues": ["Console hydration warning: '<span> cannot be a child of <option>' — caused by Emergent dev-time source-code instrumentation injecting <span> markers into <option> children of profile-months <select>. Harmless in production but pollutes logs; noise only."]},
+      {"screen": "Results / MarginDashboard", "issues": ["Recharts warnings: 'width(-1) and height(-1) should be greater than 0' repeatedly emitted on initial render — chart containers momentarily size to -1 before layout. Cosmetic; charts render correctly afterwards."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "(Optional) Silence hydration warning on profile-months <select><option> by ensuring dev-instrumentation does not wrap option children in <span>, or move the mapping outside JSX so the option receives a plain text child.",
+    "(Optional) Give Recharts ResponsiveContainer a fixed minHeight/aspect to avoid the initial -1 width/height warnings."
+  ],
+  "critical_code_review_comments": [
+    "server.py: /api/ai/suggest-catalog pads units to req.months but does not strictly cap items count to a canonical 4-6; prompt asks for 4-6 and slicing is [:12] — fine but note that response items count is loosely controlled by the LLM.",
+    "SatContext.jsx: useMemo dependency array for api is [] which is fine because setState is stable, but the closure only captures the initial setState reference (which is stable so OK).",
+    "AI unit_cost < price is asserted in prompt but not enforced server-side — front-end still displays the values regardless. Acceptable for MVP.",
+    "Results.jsx exportBoth triggers two downloads 400ms apart via setTimeout — some browsers may block the second download without user gesture; consider generating a single zip or clearly labelling behaviour."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py", "/app/test_reports/iteration_1.json"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "none (no auth in this app)",
+  "seed_data_creation": "None — used localStorage-only in-session flow with 3 test items (Espresso/Latte/Mocha).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend endpoints /api/ai/suggest-catalog and /api/ai/suggest-assumptions verified. AI suggest buttons in UI were not clicked directly to save the ~60s LLM roundtrip; they call the same tested endpoints via /app/frontend/src/lib/api.js. All data-testids from the review request work as documented. localStorage key is 'sat-session-v1'."
+}
