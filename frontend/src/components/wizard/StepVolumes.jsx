@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Wand2 } from "lucide-react";
+import { Sparkles, Loader2, Wand2, CopyPlus } from "lucide-react";
 import { useSat } from "@/context/SatContext";
 import { suggestAssumptions } from "@/lib/api";
 import { applyPattern, monthLabels, num, fmtMoney } from "@/lib/model";
@@ -68,6 +68,20 @@ export default function StepVolumes() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {i > 0 && (
+                <button
+                  data-testid={`volume-copy-above-${i}`}
+                  onClick={() => {
+                    const prev = state.items[i - 1];
+                    setUnits(it.id, [...prev.units]);
+                    toast.success(`Copied volumes from ${prev.name || `Product / Service ${i}`}`);
+                  }}
+                  className="sat-chip"
+                  title={`Duplicate the monthly volumes entered for ${state.items[i - 1].name || "the item above"}`}
+                >
+                  <CopyPlus size={12} /> Copy from {state.items[i - 1].name ? `“${state.items[i - 1].name}”` : "above"}
+                </button>
+              )}
               <input
                 data-testid={`volume-base-${i}`}
                 type="number"
