@@ -63,6 +63,7 @@ class AssumptionResponse(BaseModel):
     unit_cost: float
     units: List[float]
     note: Optional[str] = None
+    source: Optional[str] = None
 
 
 def _extract_json(text: str) -> dict:
@@ -142,9 +143,14 @@ async def suggest_assumptions(req: AssumptionRequest):
         f"Known sale price: {req.price if req.price else 'unknown'}\n"
         f"Projection horizon: {req.months} months.\n\n"
         "Return JSON exactly shaped as: "
-        f'{{"price": 0, "unit_cost": 0, "units": [{req.months} integers], "note": "one short sentence"}}\n'
+        f'{{"price": 0, "unit_cost": 0, "units": [{req.months} integers], '
+        '"note": "one short sentence explaining how the recommended price was reasoned", '
+        '"source": "the benchmark or basis behind the figure, e.g. IBISWorld specialty coffee industry reports, '
+        'US BLS average consumer prices, typical published menu pricing for independent cafes"}\n'
         "If the sale price is known, keep it. unit_cost is the direct cost to deliver one unit "
-        "and must be lower than price. units = units sold per month with realistic seasonality."
+        "and must be lower than price. units = units sold per month with realistic seasonality. "
+        "The source must name a real, recognisable benchmark, industry report, trade association or "
+        "public pricing reference — never invent a URL."
     )
     data = await _ask_json(SYSTEM, prompt)
     units = [float(u or 0) for u in (data.get("units") or [])][:req.months]
@@ -154,6 +160,7 @@ async def suggest_assumptions(req: AssumptionRequest):
         unit_cost=float(data.get("unit_cost") or 0),
         units=units,
         note=data.get("note"),
+        source=data.get("source"),
     )
 
 
