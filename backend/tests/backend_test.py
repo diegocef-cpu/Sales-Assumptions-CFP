@@ -57,6 +57,10 @@ def test_suggest_assumptions_landscaping_12(session):
     assert isinstance(data.get("unit_cost"), (int, float))
     assert isinstance(data.get("units"), list)
     assert len(data["units"]) == 12
+    # regression: source field added
+    assert "source" in data
+    assert isinstance(data["source"], str) and len(data["source"]) > 0
+    assert "note" in data
 
 
 # --- suggest-assumptions 6 months ---
