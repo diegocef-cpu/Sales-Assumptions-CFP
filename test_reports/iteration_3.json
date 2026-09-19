@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 3 verifies the two NEW features (Volumes 'Copy to all' + Excel .xlsx export) and the CHANGED profile-months select (12/24 options only), plus end-to-end wizard regression at 24-month horizon. Backend: extended /app/backend/tests/backend_test.py with 3 xlsx tests using openpyxl — all 7 pytest tests green in ~22s. POST /api/export/xlsx returns proper content-type application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, Content-Disposition attachment with slugged filename, three sheets exactly ['Summary','Sales Assumptions','Cost Assumptions']. Sales header row 3 is ['Sales category','Name of product or service','Sales price ($)', 12 or 24 labels, 'Annual revenue ($)']. TOTAL REVENUE annual arithmetic verified for 12mo ($5,160) and 24mo ($10,320). Cost sheet contains TOTAL DIRECT COSTS ($), GROSS PROFIT ($), GROSS MARGIN (%) rows — GP=$2,640 and margin=51.16% match revenue-minus-cost arithmetic for the 12mo payload. Summary sheet Gross margin cell equals the same 51.16%. Frontend: (1) Copy to all — with 3 products, filling Product1 with base=100 + Grow 5%/month produced [100,105,110,116,122,128,134,141,148,155,163,171], clicking volume-copy-to-all-0 replicated all 12 cells to Product2 and Product3 exactly and fired success toast 'Applied this pattern to all 2 other products'; clicking volume-copy-to-all-0 on a zero-filled product shows toast 'Fill this product's months first, then copy it to the others' and leaves cells unchanged. (2) Excel export — clicking export-xlsx-btn downloads 'testco-assumptions.xlsx' and shows 'Excel workbook downloaded' toast, no console errors. export-csv-btn ('Both CSVs') fires 2 downloads (sales + cost). Per-table export-sales-csv-btn/export-cost-csv-btn still work. (3) profile-months — select value=24 propagates through wizard: 24 volume cells present, no 25th, Costs step accepts inputs, /results shows 68.6% margin (matches (4200-1320)/4200) and 24 month columns in the Sales/Cost tables (28 thead cells = category + name + price + 24 months + annual). (4) Regression on Volumes — flat/growth/rampup/winter/summer patterns, copy-above and clear all work; Winter surge with start=Sep-26 correctly boosts Dec/Jan/Feb calendar months to 160 and dips Jun/Jul/Aug to 75. header-margin equals gross-margin-total on Results.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "xlsx_export.py _sheet() correctly separates unit vs money display: on Sales sheet cell holds units (format '#,##0'), on Cost sheet cell holds u*unit_cost (MONEY0). revenue_totals still accumulates u*price on both sheets so GROSS PROFIT row can compute rev-cost properly on the Cost sheet.",
+    "Summary Gross margin uses revenue and cost aggregated from item.units × item.price / item.unit_cost — matches per-sheet totals.",
+    "StepVolumes copy-to-all guard uses num((it.units||[]).find(u => num(u) > 0)) <= 0 — cleanly rejects all-zero and undefined-units cases with a single check.",
+    "Results.exportExcel gracefully wraps errors in try/finally and re-enables the button via xlsxBusy state; blob URL revoked after click.",
+    "Minor: axios error path in exportXlsx swallows the underlying server response text (responseType 'blob'); if backend ever 4xx/5xx here, users only see the generic 'Excel export failed' toast. Fine for MVP.",
+    "Minor: applyPattern for 'winter'/'summer' uses hard-coded ±60%/-25%/+50%/-30% multipliers rounded per-month — correct and deterministic; the base month value is preserved for non-peak, non-trough months so totals stay predictable."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py", "/app/test_reports/iteration_3.json", "/app/test_reports/pytest/pytest_results.xml"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "none (no auth)",
+  "seed_data_creation": "None — localStorage 'sat-session-v1' cleared between scenarios. Test wizard used industry 'coffee shop', 2–3 dummy products at $10/$15 with unit costs $3/$5.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Route to Volumes: start-wizard-btn -> fill profile-industry (+ optionally select profile-months=24) -> wizard-next-btn -> catalog-input (comma-separated) -> catalog-add-btn -> wizard-next-btn -> price-input-{i} -> wizard-next-btn. Review has no dedicated 'build-tables' testid; the final Continue button is data-testid='wizard-next-btn' which routes to /results. Start month defaults to current calendar month (Sep-26 during this run), so Winter/Summer pattern expectations must be computed against the header labels. All 7 backend tests + all requested frontend flows pass."
+}

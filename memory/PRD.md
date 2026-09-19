@@ -32,8 +32,7 @@ Build a web app that guides business owners through inputting sales and cost ass
 - Sales Assumptions table + Cost Assumptions table + live Gross Margin.
 - Calculations recompute on every edit.
 
-## Implemented (2026-06-19)
-- Landing page with industry quick-start presets and live mini-table preview.
+## Implemented (2026-06-19)- Landing page with industry quick-start presets and live mini-table preview.
 - 6–7 step wizard with progress bar and step pills: Business profile → What you sell → (Grouping, conditional) → Prices → Volumes → Costs → Review. Per-step blocking validation.
 - AI "Suggest for me" at catalogue level and per item on Prices / Volumes / Costs steps.
 - Quick-fill volume patterns: flat, 5% monthly growth, ramp up, Q4 peak, summer surge; plus editable 12-month cells with a live revenue row.
@@ -45,13 +44,21 @@ Build a web app that guides business owners through inputting sales and cost ass
 - Session persistence across reload and "Start over" reset.
 - Tested end to end: `/app/test_reports/iteration_1.json` — backend 100%, frontend 100%.
 
+## Added since (2026-06-19, iterations 2–3)
+- Prices step: "Recommended prices & sources" panel — each AI suggestion is listed below the table with the recommended price, implied direct cost, reasoning and a cited benchmark/source (new `source` field on `/api/ai/suggest-assumptions`).
+- Volumes step UX: labelled "Typical units sold per month" field + aligned "pick a pattern" row; patterns fall back to the first entered volume, amber highlight + toast when no base exists; per-item **Clear**, **Copy from "<previous item>"** and **Copy to all** buttons.
+- "Q4 peak" replaced by **Winter surge** (boosts the real Dec/Jan/Feb calendar months, dips Jun–Aug).
+- Projection length restricted to **12 months (microloans under $50K)** and **24 months (loans over $50K)**; 24-month horizon verified end to end.
+- **Excel export**: `POST /api/export/xlsx` (openpyxl) builds a styled 3-sheet workbook — Summary, Sales Assumptions, Cost Assumptions (with Total revenue, Total direct costs, Gross profit and Gross margin rows, frozen panes, olive category bands). Downloaded from the Results header.
+- Verified in `/app/test_reports/iteration_2.json` and `iteration_3.json` — backend 100%, frontend 100%.
+
 ## Backlog
 ### P0
 - None outstanding.
 ### P1
 - Multiple saved scenarios / side-by-side comparison (needs persistence).
 - Overheads + fixed cost step to produce a full cash flow projection, not just gross margin.
-- Excel (.xlsx) export matching the lender's workbook exactly.
+- Custom seasonality (owner marks their own busy/quiet months).
 ### P2
 - Shareable read-only link for the lender.
 - Import an existing spreadsheet to pre-fill the catalogue.
