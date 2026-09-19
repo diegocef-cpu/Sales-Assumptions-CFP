@@ -141,9 +141,10 @@ const esc = (v) => {
 const rowsToCsv = (rows) => rows.map((r) => r.map(esc).join(",")).join("\n");
 
 export const buildSalesCsv = (state, totals) => {
+  const span = state.months === 12 ? "Annual" : `${state.months}-month`;
   const rows = [
     ["MONTHLY SALES PROJECTION", state.businessName || "", "", ...totals.labels.map(() => ""), ""],
-    ["Sales Category", "Name of Product or Service", "Sales price ($)", ...totals.labels, "Annual Revenue ($)"],
+    ["Sales Category", "Name of Product or Service", "Sales price ($)", ...totals.labels, `${span} Revenue ($)`],
   ];
   state.categories.forEach((cat) => {
     const catItems = state.items.filter((i) => i.categoryId === cat.id);
@@ -163,9 +164,10 @@ export const buildSalesCsv = (state, totals) => {
 };
 
 export const buildCostCsv = (state, totals) => {
+  const span = state.months === 12 ? "Annual" : `${state.months}-month`;
   const rows = [
     ["MONTHLY DIRECT COST PROJECTION", state.businessName || ""],
-    ["Sales Category", "Name of Product or Service", "Cost per unit ($)", ...totals.labels, "Annual Direct Cost ($)"],
+    ["Sales Category", "Name of Product or Service", "Cost per unit ($)", ...totals.labels, `${span} Direct Cost ($)`],
   ];
   state.categories.forEach((cat) => {
     const catItems = state.items.filter((i) => i.categoryId === cat.id);

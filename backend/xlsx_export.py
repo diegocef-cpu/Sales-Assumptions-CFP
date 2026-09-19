@@ -98,7 +98,7 @@ def _sheet(wb, req: ExportRequest, sales: bool):
         "Name of product or service",
         "Sales price ($)" if sales else "Cost per unit ($)",
         labels,
-        f"Annual {'revenue' if sales else 'cost'} ($)",
+        f"{'Annual' if months == 12 else str(months) + '-month'} {'revenue' if sales else 'cost'} ($)",
     )
 
     row = 4

@@ -40,7 +40,7 @@ export const AssumptionTable = ({ mode }) => {
                 </th>
               ))}
               <th className="min-w-[120px] bg-slate-900 px-3 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider">
-                Annual {isSales ? "revenue" : "cost"} ($)
+                {state.months === 12 ? "Annual" : `${state.months}-month`} {isSales ? "revenue" : "cost"} ($)
               </th>
             </tr>
           </thead>
