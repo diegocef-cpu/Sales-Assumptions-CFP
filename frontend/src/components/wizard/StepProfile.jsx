@@ -1,0 +1,106 @@
+import React from "react";
+import { useSat } from "@/context/SatContext";
+
+const MODELS = [
+  { id: "products", label: "Physical products", hint: "You sell goods by the unit" },
+  { id: "services", label: "Services", hint: "You bill jobs, hours or sessions" },
+  { id: "mixed", label: "A mix of both", hint: "Products plus services" },
+  { id: "subscription", label: "Subscriptions", hint: "Recurring plans or memberships" },
+];
+
+export default function StepProfile() {
+  const { state, update, setMonths } = useSat();
+
+  return (
+    <div className="space-y-8">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-800">Business name</span>
+          <span className="ml-2 text-xs text-slate-400">optional</span>
+          <input
+            data-testid="profile-business-name"
+            className="sat-input mt-2"
+            placeholder="e.g. Northside Coffee Co."
+            value={state.businessName}
+            onChange={(e) => update({ businessName: e.target.value })}
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-800">What industry are you in?</span>
+          <input
+            data-testid="profile-industry"
+            className="sat-input mt-2"
+            placeholder="e.g. specialty coffee roastery"
+            value={state.industry}
+            onChange={(e) => update({ industry: e.target.value })}
+          />
+          <span className="mt-1.5 block text-xs text-slate-500">We use this to suggest realistic prices, costs and seasonality.</span>
+        </label>
+      </div>
+
+      <div>
+        <span className="text-sm font-semibold text-slate-800">How do you make money?</span>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {MODELS.map((m) => {
+            const active = state.businessModel === m.id;
+            return (
+              <button
+                key={m.id}
+                data-testid={`profile-model-${m.id}`}
+                onClick={() => update({ businessModel: m.id })}
+                className={`rounded-xl border p-4 text-left transition-all ${
+                  active ? "border-[#7ac24a] bg-[#f2f9ec] shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <span className={`block text-sm font-semibold ${active ? "text-[#3f6420]" : "text-slate-800"}`}>{m.label}</span>
+                <span className="mt-1 block text-xs text-slate-500">{m.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-800">Projection starts</span>
+          <input
+            data-testid="profile-start-month"
+            type="month"
+            className="sat-input mt-2"
+            value={state.startMonth}
+            onChange={(e) => update({ startMonth: e.target.value })}
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-800">Projection length</span>
+          <select
+            data-testid="profile-months"
+            className="sat-input mt-2"
+            value={state.months}
+            onChange={(e) => setMonths(parseInt(e.target.value, 10))}
+          >
+            {[6, 12, 18, 24].map((m) => (
+              <option key={m} value={m}>
+                {m} months
+              </option>
+            ))}
+          </select>
+          <span className="mt-1.5 block text-xs text-slate-500">Lenders usually ask for 12 months.</span>
+        </label>
+      </div>
+
+      <label className="block">
+        <span className="text-sm font-semibold text-slate-800">Anything else about your sales we should know?</span>
+        <span className="ml-2 text-xs text-slate-400">optional</span>
+        <textarea
+          data-testid="profile-description"
+          rows={3}
+          className="sat-input mt-2 resize-none"
+          placeholder="e.g. we're busiest in December, most revenue comes from wholesale accounts"
+          value={state.description}
+          onChange={(e) => update({ description: e.target.value })}
+        />
+      </label>
+    </div>
+  );
+}

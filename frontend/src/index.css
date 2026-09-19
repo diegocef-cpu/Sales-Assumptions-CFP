@@ -1,0 +1,114 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --sat-green: #7ac24a;
+        --sat-green-dark: #68a73e;
+        --sat-green-tint: #f2f9ec;
+        --sat-ink: #0f172a;
+
+        --background: 0 0% 100%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+        --primary: 94 51% 52%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 94 51% 94%;
+        --accent-foreground: 94 60% 20%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 94 51% 52%;
+        --radius: 0.75rem;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        margin: 0;
+        @apply bg-white text-slate-900;
+        font-family: "Sora", ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    .font-display {
+        font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+    }
+    .font-num {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+@layer components {
+    .sat-card {
+        @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    }
+    .sat-input {
+        @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition-all placeholder:text-slate-400 focus:border-[#7ac24a] focus:ring-2 focus:ring-[#7ac24a]/30;
+    }
+    .sat-cell-input {
+        @apply w-full rounded-md border border-transparent bg-transparent px-1.5 py-1 text-right text-xs outline-none transition-colors hover:border-slate-300 focus:border-[#7ac24a] focus:bg-white focus:ring-2 focus:ring-[#7ac24a]/25;
+        font-family: "JetBrains Mono", monospace;
+        font-variant-numeric: tabular-nums;
+    }
+    .sat-btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-[#7ac24a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#68a73e] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50;
+    }
+    .sat-btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+    .sat-btn-dark {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800;
+    }
+    .sat-chip {
+        @apply inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-[#7ac24a] hover:bg-[#f2f9ec] hover:text-[#3f6420];
+    }
+    .sat-grain::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.35;
+        background-image: radial-gradient(#0f172a12 1px, transparent 1px);
+        background-size: 22px 22px;
+    }
+}
+
+@keyframes sat-rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.sat-rise {
+    animation: sat-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@layer base {
+    [data-debug-wrapper="true"] {
+        display: contents !important;
+    }
+}

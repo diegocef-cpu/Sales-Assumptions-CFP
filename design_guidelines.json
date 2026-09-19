@@ -1,0 +1,122 @@
+{
+  "project_info": {
+    "name": "Sat (sales assumptions tool)",
+    "description": "Guided financial sales and cost assumption web app with a 12-month projection horizon for business owners presenting cash flow assumptions to lenders.",
+    "app_type": "saas_app",
+    "version": "1.0.0"
+  },
+  "color_system": {
+    "primary_brand_green": "#7AC24A",
+    "primary_brand_green_hover": "#68A73E",
+    "primary_brand_green_light": "#F2F9EC",
+    "primary_brand_green_border": "#CBE8AF",
+    "spreadsheet_dark_header": "#111827",
+    "spreadsheet_dark_header_text": "#FFFFFF",
+    "spreadsheet_olive_category_bg": "#EEF3E2",
+    "spreadsheet_olive_category_border": "#7AC24A",
+    "spreadsheet_olive_category_text": "#2D3B16",
+    "spreadsheet_olive_category_badge": "#4A5D23",
+    "background_light": "#FFFFFF",
+    "background_subtle": "#F8FAFC",
+    "card_background": "#FFFFFF",
+    "card_border": "#E2E8F0",
+    "text_primary": "#0F172A",
+    "text_secondary": "#475569",
+    "text_muted": "#94A3B8",
+    "accent_chart_revenue": "#7AC24A",
+    "accent_chart_cogs": "#F59E0B",
+    "accent_chart_margin": "#10B981",
+    "accent_chart_cat1": "#7AC24A",
+    "accent_chart_cat2": "#3B82F6",
+    "accent_chart_cat3": "#8B5CF6",
+    "accent_chart_cat4": "#EC4899",
+    "status_success": "#10B981",
+    "status_warning": "#F59E0B",
+    "status_error": "#EF4444"
+  },
+  "typography": {
+    "headline_font": "Outfit, sans-serif",
+    "body_font": "Inter, sans-serif",
+    "mono_font": "JetBrains Mono, monospace",
+    "scale": {
+      "h1": "text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-semibold",
+      "h4": "text-lg font-semibold",
+      "body": "text-sm sm:text-base leading-relaxed",
+      "small": "text-xs sm:text-sm text-slate-500",
+      "table_cell": "text-xs sm:text-sm font-mono"
+    }
+  },
+  "layout_and_spacing": {
+    "container_max_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "wizard_container_width": "max-w-4xl mx-auto",
+    "header_height": "h-16",
+    "card_padding": "p-5 sm:p-6",
+    "table_cell_padding": "px-3 py-2.5",
+    "border_radius": "rounded-xl",
+    "button_radius": "rounded-lg"
+  },
+  "key_features_and_views": {
+    "landing_hero": "Clean intro banner with app description, quick preset launcher (Retail, SaaS, Restaurant, Services), and 'Start Guided Wizard' CTA button.",
+    "guided_wizard": {
+      "progress_bar": "Sticky step indicator with 5 key phases (1. Business Profile -> 2. Products & Categories -> 3. Unit Sales Projections -> 4. Per-Unit Direct Costs -> 5. Summary & Analysis).",
+      "step_1_business_profile": "Industry selection, business model, currency symbol ($), starting projection month, and AI auto-suggest assumptions button.",
+      "step_2_product_catalog": "Dynamic item management. Auto-detects if >10 products and prompts category grouping (Sales Category 1, Sales Category 2...). Price per unit inputs.",
+      "step_3_sales_volume": "12-month unit volume inputs per product with quick tools: Bulk Fill, Linear Growth Trend (+% / mo), Seasonality Patterns (Q4 Peak, Summer Surge), and AI Auto-Fill.",
+      "step_4_cost_assumptions": "Per-unit Cost of Goods Sold (COGS) / direct cost input with gross margin target suggestions.",
+      "step_5_wizard_review": "Validation summary, instant calculation check, and button to open full spreadsheet view."
+    },
+    "spreadsheet_views": {
+      "sales_table": "12-month horizontally scrollable table with sticky category/product name columns, dark header row (#111827), olive/dark-yellow category band rows (#EEF3E2), unit price, monthly unit volume columns (Jan-Dec), and Annual Total Revenue.",
+      "cost_table": "Matching table structure showing Cost per Unit and monthly total direct cost projection.",
+      "margin_summary_table": "Dynamic row showing Total Revenue, Total Direct Costs, Gross Margin ($), and Gross Margin (%)."
+    },
+    "gross_margin_dashboard": {
+      "kpi_cards": [
+        "Total 12-Month Revenue",
+        "Total 12-Month Direct Costs (COGS)",
+        "Overall Gross Margin %",
+        "Average Monthly Gross Profit",
+        "Peak Revenue Month"
+      ],
+      "charts": [
+        "Monthly Revenue vs. Direct Costs (Stacked Area / Bar Chart)",
+        "Monthly Gross Margin % Trend Line",
+        "Revenue Share by Product Category (Donut Chart)"
+      ]
+    },
+    "ai_assistant_integration": {
+      "prompt_modal_or_drawer": "Emergent LLM key integration to generate realistic industry sales volume trends, price points, and cost percentages inline."
+    },
+    "data_portability": {
+      "export_csv": "Exports both Sales Assumptions Table and Cost Assumptions Table into clean formatted CSV spreadsheet files.",
+      "export_json_preset": "Allows downloading and importing scenario presets in JSON format.",
+      "in_session_storage": "Automatic localStorage caching to prevent data loss on refresh."
+    }
+  },
+  "image_urls": {
+    "hero_financial_bg": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBidXNpbmVzcyUyMGRhc2hib2FyZCUyMGZpbmFuY2lhbCUyMGRhdGElMjBzcHJlYWRzaGVldHxlbnwwfHx8fDE3ODk4Mzg5ODF8MA&ixlib=rb-4.1.0&q=85",
+    "dashboard_preview": "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBidXNpbmVzcyUyMGRhc2hib2FyZCUyMGZpbmFuY2lhbCUyMGRhdGElMjBzcHJlYWRzaGVldHxlbnwwfHx8fDE3ODk4Mzg5ODF8MA&ixlib=rb-4.1.0&q=85",
+    "analytics_laptop": "https://images.pexels.com/photos/7947999/pexels-photo-7947999.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+  },
+  "component_guidelines": {
+    "buttons": "Primary: bg-[#7AC24A] hover:bg-[#68A73E] text-white font-medium transition-colors shadow-sm. Secondary: border border-slate-300 bg-white hover:bg-slate-50 text-slate-700. Dark Header Action: bg-slate-900 text-white hover:bg-slate-800.",
+    "tables": "Must feature sticky first columns (z-20), dark headers (#111827), olive category rows (#EEF3E2), zebra striping on product rows, right-aligned monetary values, and live inline editing input cells.",
+    "inputs": "Focus ring ring-2 ring-[#7AC24A] border-slate-300 rounded-md text-sm transition-all.",
+    "cards": "Border border-slate-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow."
+  },
+  "testing_requirements": {
+    "data_testid_convention": "Must use data-testid on all interactive elements (e.g. data-testid='wizard-next-btn', data-testid='sales-table-header', data-testid='export-csv-btn', data-testid='ai-suggest-btn', data-testid='category-group-prompt')."
+  },
+  "instructions_to_main_agent": [
+    "Ensure theme uses clean White background with primary green #7AC24A accents as explicitly requested.",
+    "Ensure the Sales Assumptions Table matches the Google Sheets reference: dark #111827 header row with white text, olive/dark-yellow #EEF3E2 banded category rows, sticky left columns for product/category names and unit prices, and 12 monthly unit volume columns.",
+    "Support dynamic auto-grouping prompt when user adds more than 10 products.",
+    "Provide quick volume pattern tools: flat fill, linear growth (+%), seasonality (Q4 peak), and AI suggestion.",
+    "Integrate Emergent LLM backend API for inline AI suggestions for product prices, unit volumes, and COGS rates based on industry.",
+    "Include dynamic Gross Margin Dashboard with Recharts charts (Area, Bar, Pie) and KPI summary metrics.",
+    "Provide instant CSV export of both Sales and Cost tables.",
+    "Use data-testid on all key interactive elements for robust automated testing."
+  ]
+}
