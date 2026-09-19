@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Wand2, CopyPlus } from "lucide-react";
+import { Sparkles, Loader2, Wand2, CopyPlus, Eraser } from "lucide-react";
 import { useSat } from "@/context/SatContext";
 import { suggestAssumptions } from "@/lib/api";
-import { applyPattern, monthLabels, num, fmtMoney } from "@/lib/model";
+import { applyPattern, emptyUnits, monthLabels, num, fmtMoney } from "@/lib/model";
 
 const PATTERNS = [
   { id: "flat", label: "Same every month" },
@@ -17,17 +17,24 @@ export default function StepVolumes() {
   const { state, setUnit, setUnits, updateItem, totals } = useSat();
   const [base, setBase] = useState({});
   const [busy, setBusy] = useState(null);
+  const [needBase, setNeedBase] = useState(null);
 
   const labels = monthLabels(state.startMonth, state.months);
   const startIdx = parseInt((state.startMonth || "2026-01").split("-")[1], 10) - 1;
 
   const fill = (item, pattern) => {
-    const b = num(base[item.id]);
+    const typed = num(base[item.id]);
+    const existing = num((item.units || []).find((u) => num(u) > 0));
+    const b = typed > 0 ? typed : existing;
     if (b <= 0) {
-      toast.error("Enter a typical monthly volume first");
+      setNeedBase(item.id);
+      toast.error("Type a typical monthly volume in the box first, then pick a pattern");
       return;
     }
+    setNeedBase(null);
+    if (typed <= 0) setBase((s) => ({ ...s, [item.id]: String(b) }));
     setUnits(item.id, applyPattern(pattern, b, state.months, { startIdx, growth: 5 }));
+    toast.success(`Filled all ${state.months} months for ${item.name || "this item"}`);
   };
 
   const suggest = async (item) => {
@@ -82,33 +89,58 @@ export default function StepVolumes() {
                   <CopyPlus size={12} /> Copy from {state.items[i - 1].name ? `“${state.items[i - 1].name}”` : "above"}
                 </button>
               )}
-              <input
-                data-testid={`volume-base-${i}`}
-                type="number"
-                min="0"
-                className="sat-input font-num w-28 py-1.5 text-right"
-                placeholder="units / mo"
-                value={base[it.id] ?? ""}
-                onChange={(e) => setBase((b) => ({ ...b, [it.id]: e.target.value }))}
-              />
-              {PATTERNS.map((p) => (
-                <button
-                  key={p.id}
-                  data-testid={`volume-pattern-${p.id}-${i}`}
-                  onClick={() => fill(it, p.id)}
-                  className="sat-chip"
-                >
-                  <Wand2 size={12} /> {p.label}
-                </button>
-              ))}
+              <button
+                data-testid={`volume-clear-${i}`}
+                onClick={() => {
+                  setUnits(it.id, emptyUnits(state.months));
+                  setBase((s) => ({ ...s, [it.id]: "" }));
+                }}
+                className="sat-chip"
+              >
+                <Eraser size={12} /> Clear
+              </button>
               <button
                 data-testid={`ai-suggest-volume-${i}`}
                 onClick={() => suggest(it)}
                 disabled={busy === it.id}
                 className="sat-chip"
               >
-                {busy === it.id ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} Suggest
+                {busy === it.id ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} Suggest volumes
               </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-x-4 gap-y-3 border-b border-slate-200 bg-white px-5 py-4">
+            <label className="block">
+              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Typical units sold per month
+              </span>
+              <input
+                data-testid={`volume-base-${i}`}
+                type="number"
+                min="0"
+                className={`sat-input font-num mt-1.5 w-36 py-1.5 text-right ${
+                  needBase === it.id ? "border-amber-400 ring-2 ring-amber-200" : ""
+                }`}
+                placeholder="e.g. 120"
+                value={base[it.id] ?? ""}
+                onChange={(e) => {
+                  setNeedBase(null);
+                  setBase((b) => ({ ...b, [it.id]: e.target.value }));
+                }}
+              />
+            </label>
+            <div>
+              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Then pick a pattern to fill all {state.months} months
+              </span>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                {PATTERNS.map((p) => (
+                  <button key={p.id} data-testid={`volume-pattern-${p.id}-${i}`} onClick={() => fill(it, p.id)} className="sat-chip">
+                    <Wand2 size={12} /> {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
