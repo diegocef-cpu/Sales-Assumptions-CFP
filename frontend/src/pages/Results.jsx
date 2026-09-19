@@ -1,18 +1,38 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Download, Pencil, ArrowLeft } from "lucide-react";
+import { Download, Pencil, ArrowLeft, FileSpreadsheet, Loader2 } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { AssumptionTable } from "@/components/AssumptionTable";
 import { MarginDashboard } from "@/components/MarginDashboard";
 import { useSat } from "@/context/SatContext";
+import { exportXlsx } from "@/lib/api";
 import { buildCostCsv, buildSalesCsv, downloadCsv, fmtPct } from "@/lib/model";
 
 export default function Results() {
   const navigate = useNavigate();
   const { state, totals } = useSat();
+  const [xlsxBusy, setXlsxBusy] = useState(false);
 
   const slug = (state.businessName || "sat").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  const exportExcel = async () => {
+    setXlsxBusy(true);
+    try {
+      const blob = await exportXlsx(state, totals.labels);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}-assumptions.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Excel workbook downloaded");
+    } catch (e) {
+      toast.error("Excel export failed — try the CSV export");
+    } finally {
+      setXlsxBusy(false);
+    }
+  };
 
   const exportSales = () => {
     downloadCsv(`${slug}-sales-assumptions.csv`, buildSalesCsv(state, totals));
@@ -48,8 +68,11 @@ export default function Results() {
           <button data-testid="edit-in-wizard-btn" onClick={() => navigate("/wizard")} className="sat-chip">
             <Pencil size={13} /> Edit in wizard
           </button>
-          <button data-testid="export-csv-btn" onClick={exportBoth} className="sat-btn-primary py-2 text-xs">
-            <Download size={14} /> Export both CSVs
+          <button data-testid="export-csv-btn" onClick={exportBoth} className="sat-chip">
+            <Download size={13} /> Both CSVs
+          </button>
+          <button data-testid="export-xlsx-btn" onClick={exportExcel} disabled={xlsxBusy} className="sat-btn-primary py-2 text-xs">
+            {xlsxBusy ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />} Excel workbook
           </button>
         </>
       }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Wand2, CopyPlus, Eraser } from "lucide-react";
+import { Sparkles, Loader2, Wand2, CopyPlus, Copy, Eraser } from "lucide-react";
 import { useSat } from "@/context/SatContext";
 import { suggestAssumptions } from "@/lib/api";
 import { applyPattern, emptyUnits, monthLabels, num, fmtMoney } from "@/lib/model";
@@ -87,6 +87,25 @@ export default function StepVolumes() {
                   title={`Duplicate the monthly volumes entered for ${state.items[i - 1].name || "the item above"}`}
                 >
                   <CopyPlus size={12} /> Copy from {state.items[i - 1].name ? `“${state.items[i - 1].name}”` : "above"}
+                </button>
+              )}
+              {state.items.length > 1 && (
+                <button
+                  data-testid={`volume-copy-to-all-${i}`}
+                  onClick={() => {
+                    if (num((it.units || []).find((u) => num(u) > 0)) <= 0) {
+                      toast.error("Fill this product's months first, then copy it to the others");
+                      return;
+                    }
+                    state.items.forEach((other) => {
+                      if (other.id !== it.id) setUnits(other.id, [...it.units]);
+                    });
+                    toast.success(`Applied this pattern to all ${state.items.length - 1} other products`);
+                  }}
+                  className="sat-chip"
+                  title="Push these monthly volumes to every other product"
+                >
+                  <Copy size={12} /> Copy to all
                 </button>
               )}
               <button

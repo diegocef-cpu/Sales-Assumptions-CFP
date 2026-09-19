@@ -12,6 +12,9 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from fastapi.responses import StreamingResponse
+
+from xlsx_export import ExportRequest, build_workbook
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -161,6 +164,17 @@ async def suggest_assumptions(req: AssumptionRequest):
         units=units,
         note=data.get("note"),
         source=data.get("source"),
+    )
+
+
+@api_router.post("/export/xlsx")
+async def export_xlsx(req: ExportRequest):
+    buf = build_workbook(req)
+    slug = re.sub(r"[^a-z0-9]+", "-", (req.business_name or "sat").lower()).strip("-") or "sat"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{slug}-assumptions.xlsx"'},
     )
 
 

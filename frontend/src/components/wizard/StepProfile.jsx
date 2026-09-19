@@ -76,16 +76,15 @@ export default function StepProfile() {
           <select
             data-testid="profile-months"
             className="sat-input mt-2"
-            value={state.months}
+            value={state.months === 24 ? 24 : 12}
             onChange={(e) => setMonths(parseInt(e.target.value, 10))}
           >
-            {[6, 12, 18, 24].map((m) => (
-              <option key={m} value={m}>
-                {m} months
-              </option>
-            ))}
+            <option value={12}>12 months — microloans under $50K</option>
+            <option value={24}>24 months — loans over $50K</option>
           </select>
-          <span className="mt-1.5 block text-xs text-slate-500">Lenders usually ask for 12 months.</span>
+          <span className="mt-1.5 block text-xs text-slate-500">
+            Lenders ask for 12 months on a microloan under $50K, and 24 months once the request goes above $50K.
+          </span>
         </label>
       </div>
 
