@@ -9,7 +9,7 @@ const PATTERNS = [
   { id: "flat", label: "Same every month" },
   { id: "growth", label: "Grow 5% / month" },
   { id: "rampup", label: "Ramp up" },
-  { id: "q4", label: "Q4 peak" },
+  { id: "winter", label: "Winter surge" },
   { id: "summer", label: "Summer surge" },
 ];
 
@@ -110,33 +110,40 @@ export default function StepVolumes() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-end gap-x-4 gap-y-3 border-b border-slate-200 bg-white px-5 py-4">
+          <div className="flex flex-wrap items-start gap-x-6 gap-y-3 border-b border-slate-200 bg-white px-5 py-4">
             <label className="block">
-              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="flex h-4 items-center text-[11px] font-bold uppercase leading-none tracking-wider text-slate-500">
                 Typical units sold per month
               </span>
-              <input
-                data-testid={`volume-base-${i}`}
-                type="number"
-                min="0"
-                className={`sat-input font-num mt-1.5 w-36 py-1.5 text-right ${
-                  needBase === it.id ? "border-amber-400 ring-2 ring-amber-200" : ""
-                }`}
-                placeholder="e.g. 120"
-                value={base[it.id] ?? ""}
-                onChange={(e) => {
-                  setNeedBase(null);
-                  setBase((b) => ({ ...b, [it.id]: e.target.value }));
-                }}
-              />
+              <div className="mt-2 flex h-9 items-center">
+                <input
+                  data-testid={`volume-base-${i}`}
+                  type="number"
+                  min="0"
+                  className={`sat-input font-num h-9 w-36 py-0 text-right ${
+                    needBase === it.id ? "border-amber-400 ring-2 ring-amber-200" : ""
+                  }`}
+                  placeholder="e.g. 120"
+                  value={base[it.id] ?? ""}
+                  onChange={(e) => {
+                    setNeedBase(null);
+                    setBase((b) => ({ ...b, [it.id]: e.target.value }));
+                  }}
+                />
+              </div>
             </label>
             <div>
-              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="flex h-4 items-center text-[11px] font-bold uppercase leading-none tracking-wider text-slate-500">
                 Then pick a pattern to fill all {state.months} months
               </span>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <div className="mt-2 flex min-h-9 flex-wrap items-center gap-2">
                 {PATTERNS.map((p) => (
-                  <button key={p.id} data-testid={`volume-pattern-${p.id}-${i}`} onClick={() => fill(it, p.id)} className="sat-chip">
+                  <button
+                    key={p.id}
+                    data-testid={`volume-pattern-${p.id}-${i}`}
+                    onClick={() => fill(it, p.id)}
+                    className="sat-chip h-9"
+                  >
                     <Wand2 size={12} /> {p.label}
                   </button>
                 ))}

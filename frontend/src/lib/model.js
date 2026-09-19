@@ -40,9 +40,9 @@ export const applyPattern = (pattern, base, months, opts = {}) => {
   for (let i = 0; i < months; i++) {
     if (pattern === "flat") out.push(b);
     else if (pattern === "growth") out.push(Math.round(b * Math.pow(1 + growth, i)));
-    else if (pattern === "q4") {
+    else if (pattern === "winter") {
       const monthIdx = (num(opts.startIdx) + i) % 12;
-      const boost = monthIdx >= 9 ? 1.6 : monthIdx <= 1 ? 0.75 : 1;
+      const boost = monthIdx === 11 || monthIdx <= 1 ? 1.6 : monthIdx >= 5 && monthIdx <= 7 ? 0.75 : 1;
       out.push(Math.round(b * boost));
     } else if (pattern === "summer") {
       const monthIdx = (num(opts.startIdx) + i) % 12;
