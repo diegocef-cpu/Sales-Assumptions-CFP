@@ -87,25 +87,59 @@ export default function StepCosts() {
                   healthy ? "bg-[#f2f9ec] text-[#3f6420]" : "bg-amber-50 text-amber-700"
                 }`}
               >
-                {fmtPct(m?.marginPct ?? 0)}
+                {fmtPct(m?.marginPct ?? 0)} margin
               </span>
             </div>
           );
         })}
       </div>
 
-      <div className="sat-card flex flex-wrap items-center justify-between gap-4 bg-slate-900 p-5 text-white">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Running gross margin</span>
-        <div className="flex flex-wrap items-baseline gap-6">
-          <span className="font-num text-sm text-slate-300">
-            Revenue <strong className="text-white">{fmtMoney(totals.revenueTotal)}</strong>
+      <div className="sat-card overflow-hidden bg-slate-900 text-white">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Running gross margin — all {state.months} months, every product combined
           </span>
-          <span className="font-num text-sm text-slate-300">
-            Direct costs <strong className="text-white">{fmtMoney(totals.costTotal)}</strong>
-          </span>
-          <span data-testid="running-margin" className="font-num text-2xl font-bold text-[#a8e06f]">
-            {fmtPct(totals.marginPct)}
-          </span>
+          <span className="font-num text-[11px] text-slate-500">revenue − direct costs = gross profit</span>
+        </div>
+        <div className="grid gap-px bg-white/10 sm:grid-cols-4">
+          {[
+            {
+              label: "Revenue",
+              hint: `price × units, all ${state.months} months`,
+              value: fmtMoney(totals.revenueTotal),
+              testid: "running-revenue",
+            },
+            {
+              label: "Direct costs",
+              hint: "cost per unit × units",
+              value: fmtMoney(totals.costTotal),
+              testid: "running-costs",
+            },
+            {
+              label: "Gross profit",
+              hint: "revenue less direct costs",
+              value: fmtMoney(totals.grossProfit),
+              testid: "running-gross-profit",
+            },
+            {
+              label: "Gross margin",
+              hint: "gross profit ÷ revenue",
+              value: fmtPct(totals.marginPct),
+              testid: "running-margin",
+              accent: true,
+            },
+          ].map((s) => (
+            <div key={s.label} className="bg-slate-900 px-5 py-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{s.label}</p>
+              <p
+                data-testid={s.testid}
+                className={`font-num mt-1.5 text-xl font-bold ${s.accent ? "text-[#a8e06f]" : "text-white"}`}
+              >
+                {s.value}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">{s.hint}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
