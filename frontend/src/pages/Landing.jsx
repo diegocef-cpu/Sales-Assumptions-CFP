@@ -41,9 +41,9 @@ export default function Landing() {
                 </span>
               </h1>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-600">
-                Sat walks you through a short guided interview about what you sell, what you charge and what it costs you to
-                deliver. It hands your lender a clean sales table, a cost table and a gross margin estimate they can drop
-                straight into a cash flow projection.
+                SAT is a CEF tool that guides you through a short interview about what you sell, what you charge, and what it
+                costs to deliver it. In the end, you get a clear sales table, cost table, and gross margin estimate that can be
+                plugged directly into your cash flow projection.
               </p>
 
               <div className="mt-9 flex flex-wrap items-center gap-3">
