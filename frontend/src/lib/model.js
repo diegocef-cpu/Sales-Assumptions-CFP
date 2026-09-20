@@ -194,12 +194,26 @@ export const buildCostCsv = (state, totals) => {
   return rowsToCsv(rows);
 };
 
-export const downloadCsv = (filename, content) => {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+/** Combined workbook-style CSV containing both tables in one file. */
+export const buildCombinedCsv = (state, totals) =>
+  `${buildSalesCsv(state, totals)}\n\n\n${buildCostCsv(state, totals)}\n`;
+
+/** Triggers a browser download. The anchor must be in the DOM for Firefox/Safari
+ *  and for the sandboxed preview iframe to honour the download attribute. */
+export const downloadBlob = (filename, blob) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 2000);
 };
+
+export const downloadCsv = (filename, content) =>
+  downloadBlob(filename, new Blob(["\uFEFF", content], { type: "text/csv;charset=utf-8;" }));

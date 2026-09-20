@@ -7,7 +7,7 @@ import { AssumptionTable } from "@/components/AssumptionTable";
 import { MarginDashboard } from "@/components/MarginDashboard";
 import { useSat } from "@/context/SatContext";
 import { exportXlsx } from "@/lib/api";
-import { buildCostCsv, buildSalesCsv, downloadCsv, fmtPct } from "@/lib/model";
+import { buildCombinedCsv, buildCostCsv, buildSalesCsv, downloadBlob, downloadCsv, fmtPct } from "@/lib/model";
 
 export default function Results() {
   const navigate = useNavigate();
@@ -20,12 +20,7 @@ export default function Results() {
     setXlsxBusy(true);
     try {
       const blob = await exportXlsx(state, totals.labels);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${slug}-assumptions.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(`${slug}-assumptions.xlsx`, blob);
       toast.success("Excel workbook downloaded");
     } catch (e) {
       toast.error("Excel export failed — try the CSV export");
@@ -36,15 +31,15 @@ export default function Results() {
 
   const exportSales = () => {
     downloadCsv(`${slug}-sales-assumptions.csv`, buildSalesCsv(state, totals));
-    toast.success("Sales assumptions exported");
+    toast.success("Sales assumptions CSV downloaded");
   };
   const exportCost = () => {
     downloadCsv(`${slug}-cost-assumptions.csv`, buildCostCsv(state, totals));
-    toast.success("Cost assumptions exported");
+    toast.success("Cost assumptions CSV downloaded");
   };
   const exportBoth = () => {
-    exportSales();
-    setTimeout(exportCost, 400);
+    downloadCsv(`${slug}-all-assumptions.csv`, buildCombinedCsv(state, totals));
+    toast.success("Sales + cost assumptions downloaded in one CSV");
   };
 
   if (state.items.length === 0) {
@@ -69,7 +64,7 @@ export default function Results() {
             <Pencil size={13} /> Edit in wizard
           </button>
           <button data-testid="export-csv-btn" onClick={exportBoth} className="sat-chip">
-            <Download size={13} /> Both CSVs
+            <Download size={13} /> CSV (both tables)
           </button>
           <button data-testid="export-xlsx-btn" onClick={exportExcel} disabled={xlsxBusy} className="sat-btn-primary py-2 text-xs">
             {xlsxBusy ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />} Excel workbook
