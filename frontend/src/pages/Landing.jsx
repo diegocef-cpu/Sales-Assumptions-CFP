@@ -11,7 +11,7 @@ const STEPS = [
   { icon: TrendingUp, title: "Live gross margin", body: "Revenue, direct costs and margin recalculate the moment you edit a cell." },
 ];
 
-const PRESETS = ["Retail store", "Coffee shop", "Consulting firm", "SaaS product", "Auto repair", "Landscaping"];
+const PRESETS = ["Retail Store", "Restaurant", "Construction", "Entertainment"];
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export default function Landing() {
           <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
             <div className="sat-rise">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#cbe8af] bg-[#f2f9ec] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#3f6420]">
-                12-month projection builder
+                Projection builder
               </span>
               <h1 className="font-display mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
                 Your sales assumptions,
