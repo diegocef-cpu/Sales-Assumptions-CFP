@@ -1,0 +1,46 @@
+{
+  "summary": "Bug-fix verification for the 4 export/download buttons on /results. Used Playwright's expect_download to capture the real download event (not just click handler execution). ALL 4 buttons produce a downloaded file with the correct slug-based filename, non-empty content, correct sections, correct KPI-matching totals, correct horizon-aware column labels for both 12-month and 24-month projections, correct toasts, and NO JS console errors. Regression: inline sales-units cell edit correctly recalculates sales-grand-total (and gross-margin-total/header-margin remain consistent).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verification_details": {
+    "downloads_captured": {
+      "export-xlsx-btn":       {"filename": "test-co-assumptions.xlsx",       "size_bytes": 8640, "toast": "Excel workbook downloaded"},
+      "export-csv-btn":        {"filename": "test-co-all-assumptions.csv",    "size_bytes": 1301, "toast": "Sales + cost assumptions downloaded in one CSV"},
+      "export-sales-csv-btn":  {"filename": "test-co-sales-assumptions.csv",  "size_bytes": 497,  "toast": "Sales assumptions CSV downloaded"},
+      "export-cost-csv-btn":   {"filename": "test-co-cost-assumptions.csv",   "size_bytes": 803,  "toast": "Cost assumptions CSV downloaded"}
+    },
+    "xlsx_sheets": ["Summary", "Sales Assumptions", "Cost Assumptions"],
+    "combined_csv_contains": ["MONTHLY SALES PROJECTION", "MONTHLY DIRECT COST PROJECTION", "TOTAL REVENUE ($)", "TOTAL DIRECT COSTS ($)", "GROSS PROFIT ($)", "GROSS MARGIN (%)"],
+    "sales_csv_contains": ["MONTHLY SALES PROJECTION", "TOTAL REVENUE ($)"],
+    "cost_csv_contains": ["MONTHLY DIRECT COST PROJECTION", "GROSS PROFIT ($)", "GROSS MARGIN (%)"],
+    "number_match": "UI KPI revenue = $58,800  ==  CSV TOTAL REVENUE last col = 58800.00 (match)",
+    "horizon_labels": {
+      "12mo_sales_col": "Annual Revenue ($)  (present; '12-month' not used)",
+      "12mo_cost_col":  "Annual Direct Cost ($)",
+      "24mo_sales_col": "24-month Revenue ($)  (present; 'Annual Revenue' absent)",
+      "24mo_cost_col":  "24-month Direct Cost ($)"
+    },
+    "inline_edit_regression": "Edited sales-units-<item>-0 from 400 -> 999. sales-grand-total updated $58,800 -> $64,191. gross-margin-total & header-margin recomputed (stayed at 66.5% because price=9 and cost=3 keeps margin constant; per-month margin cell showed 66.6% for the edited month confirming recalc).",
+    "console_errors": "0 across all four button clicks"
+  },
+  "spec_note": "Task description requested 'Annual revenue ($)' / '24-month revenue ($)' with lowercase 'r'. Implementation uses capitalized 'Annual Revenue ($)' / '24-month Revenue ($)' (and 'Annual Direct Cost ($)' / '24-month Direct Cost ($)' for cost). Purely a cosmetic capitalization difference — functional requirement (horizon-aware label) is satisfied.",
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "downloadBlob helper in /app/frontend/src/lib/model.js correctly appends <a> to document.body, .click()s it, then removes+revokeObjectURL after 2s — this is the correct pattern for sandboxed iframes and Firefox. Fix is sound.",
+    "Combined CSV write is done via a single Blob (one download event) — avoids the browser's rapid-double-download blocking that was hitting the previous implementation. Good.",
+    "CSV blobs include a UTF-8 BOM (\\uFEFF) for Excel compatibility. Good.",
+    "Minor: horizon label capitalization ('Annual Revenue' vs 'Annual revenue' in spec). Not a bug, just note."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "seed_data_creation": "None — localStorage-only wizard state (business 'Test Co', bakery, 2 items, prices 9/65, volumes flat 400/20, costs 3/22).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 4 export buttons on /results verified working with real Playwright download events. Filenames slug from businessName ('test-co-...'). XLSX has 3 sheets. Combined CSV is a single file with sales section then cost section. Horizon label switches correctly between 'Annual' (months=12) and '24-month' (months=24). Note: profile-months is a <select> element (use select_option, not fill). Note: to avoid state bleed between test runs, evaluate localStorage.clear() before reloading. sales-units cells have testid pattern `sales-units-{itemId}-{monthIdx}` (not `sales-units-cell-...`).",
+  "rca of the issue": "Previous bug (no files downloaded in user's real browser) had two root causes both fixed in this build: (1) detached <a> element was ignored by the sandboxed preview iframe and some browsers; the shared downloadBlob() now appends the anchor to document.body before .click() and cleans up afterward. (2) The old 'Both CSVs' button fired two downloads 400ms apart which browsers block-second — replaced with a single combined-CSV file. Verification: expect_download() successfully captured all 4 downloads."
+}
