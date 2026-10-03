@@ -3,7 +3,8 @@ import { toast } from "sonner";
 import { Sparkles, Loader2, BookOpen } from "lucide-react";
 import { useSat } from "@/context/SatContext";
 import { suggestAssumptions } from "@/lib/api";
-import { num, fmtMoney } from "@/lib/model";
+import { fmtMoney } from "@/lib/model";
+import { NumberCell } from "@/components/ui/NumberCell";
 
 export default function StepPricing() {
   const { state, updateItem, setUnits } = useSat();
@@ -56,15 +57,13 @@ export default function StepPricing() {
             </div>
             <div className="relative">
               <span className="font-num pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
-              <input
+              <NumberCell
                 data-testid={`price-input-${i}`}
-                type="number"
-                min="0"
-                step="0.01"
+                decimals={2}
                 className="sat-input font-num pl-7 text-right"
                 placeholder="0.00"
-                value={it.price === 0 ? "" : it.price}
-                onChange={(e) => updateItem(it.id, { price: num(e.target.value) })}
+                value={it.price}
+                onChange={(v) => updateItem(it.id, { price: v })}
               />
             </div>
             <button

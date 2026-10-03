@@ -52,6 +52,9 @@ Build a web app that guides business owners through inputting sales and cost ass
 - **Excel export**: `POST /api/export/xlsx` (openpyxl) builds a styled 3-sheet workbook — Summary, Sales Assumptions, Cost Assumptions (with Total revenue, Total direct costs, Gross profit and Gross margin rows, frozen panes, olive category bands). Downloaded from the Results header.
 - Verified in `/app/test_reports/iteration_2.json` and `iteration_3.json` — backend 100%, frontend 100%.
 
+## Fixed 2026-10-03
+- **Number inputs no longer eat a leading "0"** — added `components/ui/NumberCell.jsx`, a controlled text input that keeps the raw typed string in local state while focused and commits the parsed number to shared state on every valid keystroke. Allows `0`, `0.`, `0.3`, `0.35`, `.5`, etc. Decimals capped at 2 for price/cost fields, 0 for unit fields. Wired into `AssumptionTable`, `StepPricing`, `StepCosts`, `StepVolumes`. Verified by scripted screenshot run.
+
 ## Backlog
 ### P0
 - None outstanding.

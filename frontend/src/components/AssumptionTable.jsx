@@ -1,6 +1,7 @@
 import React from "react";
 import { useSat } from "@/context/SatContext";
-import { fmtMoney, fmtPct, num } from "@/lib/model";
+import { fmtMoney, fmtPct } from "@/lib/model";
+import { NumberCell } from "@/components/ui/NumberCell";
 
 /** Spreadsheet-style assumption table. mode: "sales" | "cost" */
 export const AssumptionTable = ({ mode }) => {
@@ -81,28 +82,25 @@ export const AssumptionTable = ({ mode }) => {
                       />
                     </td>
                     <td className="border-b border-slate-100 px-2 py-1">
-                      <input
+                      <NumberCell
                         data-testid={`${mode}-price-${it.id}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        decimals={2}
                         className="sat-cell-input"
-                        value={num(it[priceKey]) === 0 ? "" : it[priceKey]}
+                        value={it[priceKey]}
                         placeholder="0.00"
-                        onChange={(e) => updateItem(it.id, { [priceKey]: num(e.target.value) })}
+                        onChange={(v) => updateItem(it.id, { [priceKey]: v })}
                       />
                     </td>
                     {totals.labels.map((l, mi) =>
                       isSales ? (
                         <td key={l} className="border-b border-slate-100 px-1 py-1">
-                          <input
+                          <NumberCell
                             data-testid={`sales-units-${it.id}-${mi}`}
-                            type="number"
-                            min="0"
+                            decimals={0}
                             className="sat-cell-input"
-                            value={num(it.units[mi]) === 0 ? "" : it.units[mi]}
+                            value={it.units[mi]}
                             placeholder="0"
-                            onChange={(e) => setUnit(it.id, mi, num(e.target.value))}
+                            onChange={(v) => setUnit(it.id, mi, v)}
                           />
                         </td>
                       ) : (

@@ -4,6 +4,7 @@ import { Sparkles, Loader2, Percent } from "lucide-react";
 import { useSat } from "@/context/SatContext";
 import { suggestAssumptions } from "@/lib/api";
 import { num, fmtMoney, fmtPct } from "@/lib/model";
+import { NumberCell } from "@/components/ui/NumberCell";
 
 export default function StepCosts() {
   const { state, updateItem, totals } = useSat();
@@ -49,16 +50,14 @@ export default function StepCosts() {
               </div>
               <div className="relative">
                 <span className="font-num pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
-                <input
-                  data-testid={`cost-input-${i}`}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="sat-input font-num pl-7 text-right"
-                  placeholder="0.00"
-                  value={it.unitCost === 0 ? "" : it.unitCost}
-                  onChange={(e) => updateItem(it.id, { unitCost: num(e.target.value) })}
-                />
+              <NumberCell
+                data-testid={`cost-input-${i}`}
+                decimals={2}
+                className="sat-input font-num pl-7 text-right"
+                placeholder="0.00"
+                value={it.unitCost}
+                onChange={(v) => updateItem(it.id, { unitCost: v })}
+              />
               </div>
               <div className="flex items-center gap-2">
                 {[0.4, 0.6].map((p) => (

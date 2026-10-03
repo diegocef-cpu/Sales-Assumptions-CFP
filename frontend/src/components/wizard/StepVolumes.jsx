@@ -4,6 +4,7 @@ import { Sparkles, Loader2, Wand2, CopyPlus, Copy, Eraser } from "lucide-react";
 import { useSat } from "@/context/SatContext";
 import { suggestAssumptions } from "@/lib/api";
 import { applyPattern, emptyUnits, monthLabels, num, fmtMoney } from "@/lib/model";
+import { NumberCell } from "@/components/ui/NumberCell";
 
 const PATTERNS = [
   { id: "flat", label: "Same every month" },
@@ -185,14 +186,13 @@ export default function StepVolumes() {
                 <tr>
                   {labels.map((l, m) => (
                     <td key={l} className="border-b border-slate-100 px-1 py-1.5">
-                      <input
+                      <NumberCell
                         data-testid={`volume-cell-${i}-${m}`}
-                        type="number"
-                        min="0"
+                        decimals={0}
                         className="sat-cell-input"
-                        value={num(it.units[m]) === 0 ? "" : it.units[m]}
+                        value={it.units[m]}
                         placeholder="0"
-                        onChange={(e) => setUnit(it.id, m, num(e.target.value))}
+                        onChange={(v) => setUnit(it.id, m, v)}
                       />
                     </td>
                   ))}
