@@ -16,7 +16,7 @@ const defaultState = () => {
     months: 12,
     startMonth: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
     useCategories: false,
-    categories: [{ id: "cat-default", name: "Products & Services" }],
+    categories: [{ id: "cat-default", name: "" }],
     items: [],
     completed: false,
   };
@@ -84,7 +84,7 @@ export const SatProvider = ({ children }) => {
     const removeItem = (id) => setState((s) => ({ ...s, items: s.items.filter((it) => it.id !== id) }));
 
     const addCategory = (name) =>
-      setState((s) => ({ ...s, categories: [...s.categories, { id: uid(), name: name || `Sales Category ${s.categories.length + 1}` }] }));
+      setState((s) => ({ ...s, categories: [...s.categories, { id: uid(), name: name || "" }] }));
 
     const updateCategory = (id, name) =>
       setState((s) => ({ ...s, categories: s.categories.map((c) => (c.id === id ? { ...c, name } : c)) }));
@@ -101,6 +101,18 @@ export const SatProvider = ({ children }) => {
       });
 
     const reset = () => setState(defaultState());
+
+    const applyCategorySuggestion = ({ categories: names, assignments }) =>
+      setState((s) => {
+        const cats = names.map((n) => ({ id: uid(), name: n }));
+        const byName = new Map(cats.map((c) => [c.name, c.id]));
+        const items = s.items.map((it) => {
+          const target = assignments?.[it.name];
+          const cid = (target && byName.get(target)) || cats[0].id;
+          return { ...it, categoryId: cid };
+        });
+        return { ...s, categories: cats, items };
+      });
 
     const loadPreset = (preset) =>
       setState((s) => {
@@ -145,6 +157,7 @@ export const SatProvider = ({ children }) => {
       removeCategory,
       reset,
       loadPreset,
+      applyCategorySuggestion,
     };
   }, []);
 

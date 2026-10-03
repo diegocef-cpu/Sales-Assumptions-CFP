@@ -19,6 +19,7 @@ export default function StepVolumes() {
   const [base, setBase] = useState({});
   const [busy, setBusy] = useState(null);
   const [needBase, setNeedBase] = useState(null);
+  const [aiLabeled, setAiLabeled] = useState({});
 
   const labels = monthLabels(state.startMonth, state.months);
   const startIdx = parseInt((state.startMonth || "2026-01").split("-")[1], 10) - 1;
@@ -50,6 +51,7 @@ export default function StepVolumes() {
       });
       if (data.units?.length) setUnits(item.id, data.units);
       if (num(item.unitCost) === 0 && data.unit_cost) updateItem(item.id, { unitCost: data.unit_cost });
+      setAiLabeled((m) => ({ ...m, [item.id]: true }));
       toast.success(data.note || `Suggested monthly volumes for ${item.name}`);
     } catch (e) {
       toast.error("Suggestion failed — enter volumes manually");
@@ -127,6 +129,14 @@ export default function StepVolumes() {
               >
                 {busy === it.id ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} Suggest volumes
               </button>
+              {aiLabeled[it.id] && (
+                <span
+                  data-testid={`volume-ai-label-${i}`}
+                  className="rounded-full bg-[#f2f9ec] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#4a7a24]"
+                >
+                  AI estimate, please verify
+                </span>
+              )}
             </div>
           </div>
 
@@ -140,6 +150,7 @@ export default function StepVolumes() {
                   data-testid={`volume-base-${i}`}
                   type="number"
                   min="0"
+                  step="0.01"
                   className={`sat-input font-num h-9 w-36 py-0 text-right ${
                     needBase === it.id ? "border-amber-400 ring-2 ring-amber-200" : ""
                   }`}
@@ -188,7 +199,7 @@ export default function StepVolumes() {
                     <td key={l} className="border-b border-slate-100 px-1 py-1.5">
                       <NumberCell
                         data-testid={`volume-cell-${i}-${m}`}
-                        decimals={0}
+                        decimals={2}
                         className="sat-cell-input"
                         value={it.units[m]}
                         placeholder="0"

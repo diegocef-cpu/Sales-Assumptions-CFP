@@ -32,24 +32,25 @@ export const fmtMoney = (v, digits = 0) =>
 
 export const fmtPct = (v) => `${(num(v) * 100).toFixed(1)}%`;
 
-/** Quick-fill volume patterns. Returns an array of `months` unit values. */
+/** Quick-fill volume patterns. Returns an array of `months` unit values (rounded to 2 decimals). */
 export const applyPattern = (pattern, base, months, opts = {}) => {
   const b = num(base);
   const growth = num(opts.growth ?? 5) / 100;
+  const r2 = (v) => Math.round(v * 100) / 100;
   const out = [];
   for (let i = 0; i < months; i++) {
     if (pattern === "flat") out.push(b);
-    else if (pattern === "growth") out.push(Math.round(b * Math.pow(1 + growth, i)));
+    else if (pattern === "growth") out.push(r2(b * Math.pow(1 + growth, i)));
     else if (pattern === "winter") {
       const monthIdx = (num(opts.startIdx) + i) % 12;
       const boost = monthIdx === 11 || monthIdx <= 1 ? 1.6 : monthIdx >= 5 && monthIdx <= 7 ? 0.75 : 1;
-      out.push(Math.round(b * boost));
+      out.push(r2(b * boost));
     } else if (pattern === "summer") {
       const monthIdx = (num(opts.startIdx) + i) % 12;
       const boost = monthIdx >= 4 && monthIdx <= 7 ? 1.5 : monthIdx >= 10 ? 0.7 : 1;
-      out.push(Math.round(b * boost));
+      out.push(r2(b * boost));
     } else if (pattern === "rampup") {
-      out.push(Math.round(b * (0.4 + (0.6 * i) / Math.max(1, months - 1)) * 1.6));
+      out.push(r2(b * (0.4 + (0.6 * i) / Math.max(1, months - 1)) * 1.6));
     } else out.push(b);
   }
   return out;

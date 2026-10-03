@@ -44,3 +44,12 @@ export const suggestAssumptions = async ({ industry, businessModel, itemName, mo
   });
   return data;
 };
+
+export const suggestCategories = async ({ industry, businessModel, items }) => {
+  const { data } = await axios.post(`${API}/ai/suggest-categories`, {
+    industry,
+    business_model: businessModel,
+    items,
+  });
+  return data;
+};

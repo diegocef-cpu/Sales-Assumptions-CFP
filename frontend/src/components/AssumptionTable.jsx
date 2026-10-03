@@ -96,7 +96,7 @@ export const AssumptionTable = ({ mode }) => {
                         <td key={l} className="border-b border-slate-100 px-1 py-1">
                           <NumberCell
                             data-testid={`sales-units-${it.id}-${mi}`}
-                            decimals={0}
+                            decimals={2}
                             className="sat-cell-input"
                             value={it.units[mi]}
                             placeholder="0"

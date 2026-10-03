@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Shell } from "@/components/Shell";
-import { useSat, CATEGORY_THRESHOLD } from "@/context/SatContext";
+import { useSat } from "@/context/SatContext";
 import { num } from "@/lib/model";
 import StepProfile from "@/components/wizard/StepProfile";
 import StepCatalog from "@/components/wizard/StepCatalog";
@@ -27,12 +27,7 @@ export default function Wizard() {
   const { state, update } = useSat();
   const [stepId, setStepId] = useState("profile");
 
-  const needsCategories = state.useCategories || state.items.length > CATEGORY_THRESHOLD;
-
-  const steps = useMemo(
-    () => STEP_DEFS.filter((s) => s.id !== "categories" || needsCategories),
-    [needsCategories]
-  );
+  const steps = STEP_DEFS;
 
   const idx = Math.max(0, steps.findIndex((s) => s.id === stepId));
   const step = steps[idx] ?? steps[0];
@@ -40,7 +35,12 @@ export default function Wizard() {
 
   const blocker = (() => {
     if (step.id === "profile" && !state.industry.trim()) return "Tell us your industry to continue";
-    if (step.id === "catalog" && state.items.length === 0) return "Add at least one product or service";
+    if (step.id === "catalog") {
+      if (state.items.length === 0) return "Add at least one product or service";
+      if (state.items.some((i) => !i.name.trim())) return "Give every item a name to continue";
+    }
+    if (step.id === "categories" && state.categories.some((c) => !c.name.trim()))
+      return "Give every category a name to continue";
     if (step.id === "pricing" && state.items.some((i) => num(i.price) <= 0)) return "Every item needs a sale price above $0";
     if (step.id === "volumes" && state.items.every((i) => i.units.every((u) => num(u) === 0)))
       return "Enter at least some monthly unit volumes";

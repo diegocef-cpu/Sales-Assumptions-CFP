@@ -9,6 +9,7 @@ import { NumberCell } from "@/components/ui/NumberCell";
 export default function StepCosts() {
   const { state, updateItem, totals } = useSat();
   const [busy, setBusy] = useState(null);
+  const [aiLabeled, setAiLabeled] = useState({});
 
   const suggest = async (item) => {
     setBusy(item.id);
@@ -21,7 +22,8 @@ export default function StepCosts() {
         price: num(item.price),
       });
       updateItem(item.id, { unitCost: data.unit_cost });
-      toast.success(data.note || `Suggested direct cost for ${item.name}`);
+      setAiLabeled((m) => ({ ...m, [item.id]: true }));
+      toast.success(`Suggested direct cost for ${item.name}`);
     } catch (e) {
       toast.error("Suggestion failed — enter the cost manually");
     } finally {
@@ -79,6 +81,14 @@ export default function StepCosts() {
                 >
                   {busy === it.id ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} Suggest
                 </button>
+                {aiLabeled[it.id] && (
+                  <span
+                    data-testid={`cost-ai-label-${i}`}
+                    className="rounded-full bg-[#f2f9ec] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#4a7a24]"
+                  >
+                    AI estimate, please verify
+                  </span>
+                )}
               </div>
               <span
                 data-testid={`item-margin-${i}`}

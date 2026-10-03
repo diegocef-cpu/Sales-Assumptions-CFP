@@ -9,7 +9,7 @@ import uuid
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from fastapi.responses import StreamingResponse
@@ -67,6 +67,17 @@ class AssumptionResponse(BaseModel):
     units: List[float]
     note: Optional[str] = None
     source: Optional[str] = None
+
+
+class CategoriesRequest(BaseModel):
+    industry: str
+    business_model: Optional[str] = "mixed"
+    items: List[str]
+
+
+class CategoriesResponse(BaseModel):
+    categories: List[str]
+    assignments: Dict[str, str]
 
 
 def _extract_json(text: str) -> dict:
@@ -165,6 +176,36 @@ async def suggest_assumptions(req: AssumptionRequest):
         note=data.get("note"),
         source=data.get("source"),
     )
+
+
+@api_router.post("/ai/suggest-categories", response_model=CategoriesResponse)
+async def suggest_categories(req: CategoriesRequest):
+    names = [n for n in (s.strip() for s in req.items) if n]
+    if not names:
+        raise HTTPException(status_code=400, detail="At least one item name is required")
+    count_rule = "1 or 2 categories" if len(names) <= 3 else "2 to 4 categories"
+    prompt = (
+        f"Industry: {req.industry}\nBusiness model: {req.business_model}\n"
+        f"Items the owner sells: {json.dumps(names)}\n\n"
+        f"Group these items into {count_rule}. Use short, simple customer-facing "
+        "category names (for example a restaurant with Tacos and Ice cream would use "
+        '"Entrees" and "Desserts"). Every item must be assigned to one of the categories '
+        "you return.\n"
+        'Return JSON exactly shaped as: {"categories": ["Name A", "Name B"], '
+        '"assignments": {"<item name>": "<category name>"}}'
+    )
+    data = await _ask_json(SYSTEM, prompt)
+    cats = [str(c).strip() for c in (data.get("categories") or []) if str(c).strip()]
+    if not cats:
+        raise HTTPException(status_code=502, detail="Could not generate categories")
+    raw_assign = data.get("assignments") or {}
+    assignments: Dict[str, str] = {}
+    for n in names:
+        chosen = str(raw_assign.get(n, "")).strip()
+        if chosen not in cats:
+            chosen = cats[0]
+        assignments[n] = chosen
+    return CategoriesResponse(categories=cats, assignments=assignments)
 
 
 @api_router.post("/export/xlsx")
