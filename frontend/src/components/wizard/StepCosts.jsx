@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Percent } from "lucide-react";
+import { Sparkles, Loader2, Percent, Info } from "lucide-react";
 import { useSat } from "@/context/SatContext";
 import { suggestAssumptions } from "@/lib/api";
 import { num, fmtMoney, fmtPct } from "@/lib/model";
@@ -25,7 +25,7 @@ export default function StepCosts() {
       setAiLabeled((m) => ({ ...m, [item.id]: true }));
       toast.success(`Suggested direct cost for ${item.name}`);
     } catch (e) {
-      toast.error("Suggestion failed — enter the cost manually");
+      toast.error("Suggestion failed, enter the cost manually");
     } finally {
       setBusy(null);
     }
@@ -36,9 +36,20 @@ export default function StepCosts() {
   return (
     <div className="space-y-5">
       <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
-        Now the direct cost of delivering <em>one</em> unit — materials, stock you buy in, subcontractors, packaging, delivery,
-        payment fees. Leave out rent, salaries and other overheads; those sit further down the cash flow.
+        Now the direct cost of delivering one unit: materials, stock you buy in, subcontractors, crew labor tied to the job,
+        packaging, delivery, and payment fees.
       </p>
+
+      <div
+        data-testid="costs-overhead-note"
+        className="my-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900"
+      >
+        <Info size={16} className="mt-0.5 shrink-0 text-amber-600" />
+        <p>
+          <strong className="font-semibold">Leave out overhead costs</strong> like rent, office salaries, marketing, and insurance.
+          Those are added further down in the cash flow.
+        </p>
+      </div>
 
       <div className="sat-card divide-y divide-slate-100 overflow-hidden">
         {state.items.map((it, i) => {
@@ -106,7 +117,7 @@ export default function StepCosts() {
       <div className="sat-card overflow-hidden bg-slate-900 text-white">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Running gross margin — all {state.months} months, every product combined
+            Running gross margin, all {state.months} months, every product combined
           </span>
           <span className="font-num text-[11px] text-slate-500">revenue − direct costs = gross profit</span>
         </div>

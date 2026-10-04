@@ -18,6 +18,7 @@ export const exportXlsx = async (state, labels) => {
     {
       business_name: state.businessName,
       industry: state.industry,
+      notes: state.description || "",
       months: state.months,
       labels,
       categories: state.categories.map((c) => ({ id: c.id, name: c.name })),

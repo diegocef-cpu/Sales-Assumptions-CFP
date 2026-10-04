@@ -37,6 +37,7 @@ class ExportCategory(BaseModel):
 class ExportRequest(BaseModel):
     business_name: str = ""
     industry: str = ""
+    notes: str = ""
     months: int = 12
     labels: List[str] = Field(default_factory=list)
     categories: List[ExportCategory] = Field(default_factory=list)
@@ -222,6 +223,7 @@ def _cover(wb, req: ExportRequest):
     rows = [
         ("Business", req.business_name or "—", None),
         ("Industry", req.industry or "—", None),
+        ("Notes from the borrower", (req.notes or "").strip() or "None provided", None),
         ("Projection horizon", f"{req.months} months", None),
         ("First month", req.labels[0] if req.labels else "—", None),
         ("Products / services", len(req.items), "#,##0"),
@@ -241,6 +243,13 @@ def _cover(wb, req: ExportRequest):
         if label == "Gross margin":
             vc.font = Font(bold=True, size=13, color="FF3F6420")
             vc.fill = PatternFill("solid", fgColor=GREEN_TINT)
+        if label == "Notes from the borrower":
+            vc.font = Font(size=10, color="FF0F172A")
+            vc.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+            text = str(value)
+            # Give the row a bit of height so wrapped notes stay readable.
+            est_lines = max(text.count("\n") + 1, min(6, (len(text) // 50) + 1))
+            ws.row_dimensions[r].height = max(18, est_lines * 15)
         lc.border = BORDER
         vc.border = BORDER
 

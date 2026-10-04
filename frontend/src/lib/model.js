@@ -196,8 +196,11 @@ export const buildCostCsv = (state, totals) => {
 };
 
 /** Combined workbook-style CSV containing both tables in one file. */
-export const buildCombinedCsv = (state, totals) =>
-  `${buildSalesCsv(state, totals)}\n\n\n${buildCostCsv(state, totals)}\n`;
+export const buildCombinedCsv = (state, totals) => {
+  const notes = (state.description || "").trim();
+  const prefix = notes ? `${rowsToCsv([["Notes from the borrower", notes]])}\n\n` : "";
+  return `${prefix}${buildSalesCsv(state, totals)}\n\n\n${buildCostCsv(state, totals)}\n`;
+};
 
 /** Triggers a browser download. The anchor must be in the DOM for Firefox/Safari
  *  and for the sandboxed preview iframe to honour the download attribute. */

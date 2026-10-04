@@ -76,3 +76,7 @@ Build a web app that guides business owners through inputting sales and cost ass
 1. Add overheads/fixed-costs step and a net cash flow view.
 2. Add xlsx export.
 3. Add scenario save/compare (requires moving state to MongoDB).
+
+## Fixed 2026-10-04
+- **Costs step copy & layout**: rewrote the intro paragraph (no em-dashes) and moved the overhead reminder into a separate amber info callout (`costs-overhead-note`) with a bold "Leave out overhead costs" lead-in.
+- **Notes field flows into exports**: profile textarea renamed "Notes for your lender" (optional). Added `notes` to `ExportRequest`; Excel Summary now has a "Notes from the borrower" row with wrap_text and auto-sized row height (shows "None provided" when blank). `buildCombinedCsv` prepends a quoted "Notes from the borrower" row above the sales table when non-empty. Results page shows a small "Your notes for your lender" card when notes exist. Verified end-to-end via curl (xlsx) + screenshot (wizard + results).

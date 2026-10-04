@@ -90,6 +90,16 @@ export default function Results() {
 
         <MarginDashboard />
 
+        {state.description && state.description.trim() && (
+          <section
+            data-testid="results-notes-card"
+            className="sat-card border-l-4 border-l-[#7ac24a] bg-[#f8fbf2] p-5"
+          >
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#4a7a24]">Your notes for your lender</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{state.description.trim()}</p>
+          </section>
+        )}
+
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">1 · Sales assumptions</h2>

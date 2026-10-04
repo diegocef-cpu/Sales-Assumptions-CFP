@@ -89,7 +89,7 @@ export default function StepProfile() {
       </div>
 
       <label className="block">
-        <span className="text-sm font-semibold text-slate-800">Anything else about your sales we should know?</span>
+        <span className="text-sm font-semibold text-slate-800">Notes for your lender</span>
         <span className="ml-2 text-xs text-slate-400">optional</span>
         <textarea
           data-testid="profile-description"
