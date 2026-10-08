@@ -236,10 +236,16 @@ async def export_xlsx(req: ExportRequest):
 # Three personas live in strictly separate code paths from the practice demo.
 # --------------------------------------------------------------------------
 
-ADMIN_PASSCODE = os.environ.get("SAT_ADMIN_PASSCODE") or "sat-lender-2026"
+ADMIN_PASSCODE = os.environ.get("SAT_ADMIN_PASSCODE") or ""
 MAX_STATE_BYTES = 1_000_000
 RATE_LIMIT_FAILS_PER_HOUR = 10
 _fail_attempts: Dict[str, List[float]] = defaultdict(list)
+
+if not ADMIN_PASSCODE:
+    logger.warning(
+        "SAT_ADMIN_PASSCODE is not set. Admin routes are disabled and will return 503 "
+        "until the environment variable is configured."
+    )
 
 NOT_FOUND = HTTPException(status_code=404, detail="This link is not valid")
 
@@ -264,6 +270,8 @@ def _record_fail(ip: str) -> None:
 
 
 def require_admin(request: Request) -> bool:
+    if not ADMIN_PASSCODE:
+        raise HTTPException(status_code=503, detail="Admin access is not configured")
     ip = _client_ip(request)
     _check_rate_limit(ip)
     header = request.headers.get("x-admin-passcode", "")

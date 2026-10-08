@@ -92,4 +92,4 @@ Build a web app that guides business owners through inputting sales and cost ass
 - **Business-name guard**: clearing the business-name field in the wizard never overwrites the lender's `business_name`; a non-empty override does.
 - **No em-dashes** across any user-visible text (home, wizard, Results, lender, borrower).
 - **No autosave on bare load**: file remains `not_started` with `first_opened_at=null` until the first real user edit.
-- **Admin passcode**: `sat-lender-2026`, stored in `/app/backend/.env` as `SAT_ADMIN_PASSCODE`; recorded in `/app/memory/test_credentials.md`.
+- **Admin passcode**: set in the `SAT_ADMIN_PASSCODE` environment variable (`/app/backend/.env`). If unset or empty, every admin route returns `503 Admin access is not configured`.
