@@ -23,7 +23,17 @@ export default function Landing() {
   };
 
   return (
-    <Shell>
+    <Shell
+      banner={
+        <div className="border-b border-slate-200 bg-amber-50">
+          <div className="mx-auto max-w-5xl px-4 py-2 sm:px-6">
+            <p data-testid="practice-banner" className="text-xs text-amber-900">
+              This is a practice version. Nothing is saved or sent to a lender. Ask your lender for a link to submit your real numbers.
+            </p>
+          </div>
+        </div>
+      }
+    >
       <main>
         <section className="sat-grain relative overflow-hidden border-b border-slate-200">
           <div className="pointer-events-none absolute -right-32 -top-40 h-[30rem] w-[30rem] rounded-full bg-[#7ac24a]/15 blur-3xl" />

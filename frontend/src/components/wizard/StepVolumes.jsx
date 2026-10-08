@@ -54,7 +54,7 @@ export default function StepVolumes() {
       setAiLabeled((m) => ({ ...m, [item.id]: true }));
       toast.success(data.note || `Suggested monthly volumes for ${item.name}`);
     } catch (e) {
-      toast.error("Suggestion failed — enter volumes manually");
+      toast.error("Suggestion failed, enter volumes manually");
     } finally {
       setBusy(null);
     }

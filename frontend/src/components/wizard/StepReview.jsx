@@ -8,7 +8,7 @@ export default function StepReview() {
 
   const warnings = [];
   state.items.forEach((it) => {
-    if (num(it.unitCost) === 0) warnings.push(`${it.name || "An item"} has no direct cost — its margin shows as 100%.`);
+    if (num(it.unitCost) === 0) warnings.push(`${it.name || "An item"} has no direct cost, its margin shows as 100%.`);
     if (num(it.unitCost) > num(it.price)) warnings.push(`${it.name || "An item"} costs more than it sells for.`);
     if (it.units.every((u) => num(u) === 0)) warnings.push(`${it.name || "An item"} has no unit volumes.`);
   });
@@ -62,7 +62,7 @@ export default function StepReview() {
               <li key={w}>{w}</li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-amber-700">You can still continue — everything stays editable in the tables.</p>
+          <p className="mt-2 text-xs text-amber-700">You can still continue, everything stays editable in the tables.</p>
         </div>
       ) : (
         <div data-testid="review-clean" className="flex items-center gap-2 rounded-xl border border-[#cbe8af] bg-[#f2f9ec] p-5 text-sm font-medium text-[#3f6420]">

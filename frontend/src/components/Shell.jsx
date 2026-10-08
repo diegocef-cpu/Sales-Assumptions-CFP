@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sprout, RotateCcw } from "lucide-react";
 import { useSat } from "@/context/SatContext";
+import { BorrowerCtx } from "@/context/BorrowerContext";
 
 export const Logo = ({ compact = false }) => (
   <Link to="/" data-testid="brand-logo" className="group flex items-center gap-2.5">
@@ -15,14 +16,33 @@ export const Logo = ({ compact = false }) => (
   </Link>
 );
 
-export const Shell = ({ children, right }) => {
-  const { reset } = useSat();
+const ResetButton = () => {
+  const sat = useSatSafe();
   const navigate = useNavigate();
-
+  if (!sat) return null;
   const onReset = () => {
-    reset();
+    sat.reset();
     navigate("/");
   };
+  return (
+    <button data-testid="reset-session-btn" onClick={onReset} className="sat-chip" title="Start over">
+      <RotateCcw size={13} /> Start over
+    </button>
+  );
+};
+
+// A safe wrapper so the lender dashboard (no SatProvider) can still use <Shell>.
+const useSatSafe = () => {
+  try {
+    return useSat();
+  } catch (e) {
+    return null;
+  }
+};
+
+export const Shell = ({ children, right, showStartOver = true, banner }) => {
+  const borrower = useContext(BorrowerCtx);
+  const hideStartOver = !showStartOver || !!borrower;
 
   return (
     <div className="min-h-screen bg-white">
@@ -31,12 +51,11 @@ export const Shell = ({ children, right }) => {
           <Logo />
           <div className="flex items-center gap-2">
             {right}
-            <button data-testid="reset-session-btn" onClick={onReset} className="sat-chip" title="Start over">
-              <RotateCcw size={13} /> Start over
-            </button>
+            {!hideStartOver && <ResetButton />}
           </div>
         </div>
       </header>
+      {banner}
       {children}
     </div>
   );

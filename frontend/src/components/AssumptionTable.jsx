@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useSat } from "@/context/SatContext";
-import { fmtMoney, fmtPct } from "@/lib/model";
+import { BorrowerCtx } from "@/context/BorrowerContext";
+import { fmtMoney, fmtPct, num } from "@/lib/model";
 import { NumberCell } from "@/components/ui/NumberCell";
 
 /** Spreadsheet-style assumption table. mode: "sales" | "cost" */
 export const AssumptionTable = ({ mode }) => {
   const { state, totals, updateItem, setUnit } = useSat();
+  const borrower = useContext(BorrowerCtx);
+  const readOnly = !!borrower?.readOnly;
   const isSales = mode === "sales";
   const priceKey = isSales ? "price" : "unitCost";
 
@@ -74,34 +77,58 @@ export const AssumptionTable = ({ mode }) => {
                         ri % 2 ? "bg-slate-50/95" : "bg-white"
                       }`}
                     >
-                      <input
-                        data-testid={`${mode}-name-${it.id}`}
-                        className="w-full border-b border-transparent bg-transparent outline-none transition-colors hover:border-slate-300 focus:border-[#7ac24a]"
-                        value={it.name}
-                        onChange={(e) => updateItem(it.id, { name: e.target.value })}
-                      />
+                      {readOnly ? (
+                        <span data-testid={`${mode}-name-${it.id}`} className="block py-1">
+                          {it.name}
+                        </span>
+                      ) : (
+                        <input
+                          data-testid={`${mode}-name-${it.id}`}
+                          className="w-full border-b border-transparent bg-transparent outline-none transition-colors hover:border-slate-300 focus:border-[#7ac24a]"
+                          value={it.name}
+                          onChange={(e) => updateItem(it.id, { name: e.target.value })}
+                        />
+                      )}
                     </td>
                     <td className="border-b border-slate-100 px-2 py-1">
-                      <NumberCell
-                        data-testid={`${mode}-price-${it.id}`}
-                        decimals={2}
-                        className="sat-cell-input"
-                        value={it[priceKey]}
-                        placeholder="0.00"
-                        onChange={(v) => updateItem(it.id, { [priceKey]: v })}
-                      />
+                      {readOnly ? (
+                        <span
+                          data-testid={`${mode}-price-${it.id}`}
+                          className="font-num block py-1 pr-2 text-right text-xs text-slate-700"
+                        >
+                          {fmtMoney(it[priceKey])}
+                        </span>
+                      ) : (
+                        <NumberCell
+                          data-testid={`${mode}-price-${it.id}`}
+                          decimals={2}
+                          className="sat-cell-input"
+                          value={it[priceKey]}
+                          placeholder="0.00"
+                          onChange={(v) => updateItem(it.id, { [priceKey]: v })}
+                        />
+                      )}
                     </td>
                     {totals.labels.map((l, mi) =>
                       isSales ? (
                         <td key={l} className="border-b border-slate-100 px-1 py-1">
-                          <NumberCell
-                            data-testid={`sales-units-${it.id}-${mi}`}
-                            decimals={2}
-                            className="sat-cell-input"
-                            value={it.units[mi]}
-                            placeholder="0"
-                            onChange={(v) => setUnit(it.id, mi, v)}
-                          />
+                          {readOnly ? (
+                            <span
+                              data-testid={`sales-units-${it.id}-${mi}`}
+                              className="font-num block py-1 pr-1 text-right text-xs text-slate-700"
+                            >
+                              {num(it.units[mi]) ? it.units[mi] : "–"}
+                            </span>
+                          ) : (
+                            <NumberCell
+                              data-testid={`sales-units-${it.id}-${mi}`}
+                              decimals={2}
+                              className="sat-cell-input"
+                              value={it.units[mi]}
+                              placeholder="0"
+                              onChange={(v) => setUnit(it.id, mi, v)}
+                            />
+                          )}
                         </td>
                       ) : (
                         <td

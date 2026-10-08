@@ -1,17 +1,31 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Download, Pencil, ArrowLeft, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Download, Pencil, ArrowLeft, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { AssumptionTable } from "@/components/AssumptionTable";
 import { MarginDashboard } from "@/components/MarginDashboard";
+import { SaveStatus } from "@/components/SaveStatus";
 import { useSat } from "@/context/SatContext";
+import { BorrowerCtx } from "@/context/BorrowerContext";
 import { exportXlsx } from "@/lib/api";
 import { buildCombinedCsv, buildCostCsv, buildSalesCsv, downloadBlob, downloadCsv, fmtPct } from "@/lib/model";
+
+const fmtSubmitted = (iso) => {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+  } catch (e) {
+    return iso;
+  }
+};
 
 export default function Results() {
   const navigate = useNavigate();
   const { state, totals } = useSat();
+  const borrower = useContext(BorrowerCtx);
+  const readOnly = !!borrower?.readOnly;
   const [xlsxBusy, setXlsxBusy] = useState(false);
 
   const slug = (state.businessName || "sat").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -23,7 +37,7 @@ export default function Results() {
       downloadBlob(`${slug}-assumptions.xlsx`, blob);
       toast.success("Excel workbook downloaded");
     } catch (e) {
-      toast.error("Excel export failed — try the CSV export");
+      toast.error("Excel export failed, try the CSV export");
     } finally {
       setXlsxBusy(false);
     }
@@ -58,33 +72,58 @@ export default function Results() {
 
   return (
     <Shell
+      showStartOver={!borrower}
+      banner={
+        borrower ? (
+          <div className="border-b border-slate-200 bg-[#f8fbf2]">
+            <div className="mx-auto max-w-5xl px-4 py-2 sm:px-6">
+              <p data-testid="borrower-link-note" className="text-xs text-[#3f6420]">
+                This is your private link. Save it to come back. Do not share it.
+              </p>
+            </div>
+          </div>
+        ) : null
+      }
       right={
         <>
-          <button data-testid="edit-in-wizard-btn" onClick={() => navigate("/wizard")} className="sat-chip">
-            <Pencil size={13} /> Edit in wizard
-          </button>
+          {!readOnly && !borrower && (
+            <button data-testid="edit-in-wizard-btn" onClick={() => navigate("/wizard")} className="sat-chip">
+              <Pencil size={13} /> Edit in wizard
+            </button>
+          )}
           <button data-testid="export-csv-btn" onClick={exportBoth} className="sat-chip">
             <Download size={13} /> CSV (both tables)
           </button>
           <button data-testid="export-xlsx-btn" onClick={exportExcel} disabled={xlsxBusy} className="sat-btn-primary py-2 text-xs">
             {xlsxBusy ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />} Excel workbook
           </button>
+          {borrower && !readOnly && <SaveStatus status={borrower.saveStatus} />}
         </>
       }
     >
       <main className="mx-auto max-w-[96rem] space-y-10 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <button onClick={() => navigate("/wizard")} className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
-              <ArrowLeft size={13} /> back to the interview
-            </button>
+            {!borrower && (
+              <button onClick={() => navigate("/wizard")} className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
+                <ArrowLeft size={13} /> back to the interview
+              </button>
+            )}
             <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-              {state.businessName || "Your business"} — lender pack
+              {state.businessName || "Your business"}, lender pack
             </h1>
             <p className="mt-2 text-sm text-slate-600">
               {state.industry || "Business"} · {state.months}-month horizon from {totals.labels[0]} · estimated gross margin{" "}
               <strong data-testid="header-margin" className="text-[#4a7a24]">{fmtPct(totals.marginPct)}</strong>
             </p>
+            {readOnly && (
+              <p
+                data-testid="submitted-marker"
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#f2f9ec] px-3 py-1 text-xs font-semibold text-[#3f6420]"
+              >
+                <CheckCircle2 size={13} /> Submitted on {fmtSubmitted(borrower.submittedAt)}
+              </p>
+            )}
           </div>
         </div>
 
@@ -119,7 +158,7 @@ export default function Results() {
           </div>
           <AssumptionTable mode="cost" />
           <p className="text-xs text-slate-500">
-            Every cell above is editable — totals, gross profit and gross margin recalculate instantly.
+            Every cell above is editable, totals, gross profit and gross margin recalculate instantly.
           </p>
         </section>
       </main>

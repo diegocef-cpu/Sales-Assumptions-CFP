@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useSat } from "@/context/SatContext";
+import { BorrowerCtx } from "@/context/BorrowerContext";
 
 const MODELS = [
   { id: "products", label: "Physical products", hint: "You sell goods by the unit" },
@@ -10,13 +11,14 @@ const MODELS = [
 
 export default function StepProfile() {
   const { state, update, setMonths } = useSat();
+  const borrower = useContext(BorrowerCtx);
 
   return (
     <div className="space-y-8">
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block">
           <span className="text-sm font-semibold text-slate-800">Business name</span>
-          <span className="ml-2 text-xs text-slate-400">optional</span>
+          {!borrower && <span className="ml-2 text-xs text-slate-400">optional</span>}
           <input
             data-testid="profile-business-name"
             className="sat-input mt-2"
@@ -37,6 +39,21 @@ export default function StepProfile() {
           <span className="mt-1.5 block text-xs text-slate-500">We use this to suggest realistic prices, costs and seasonality.</span>
         </label>
       </div>
+
+      {borrower && (
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-800">Your email</span>
+          <input
+            data-testid="profile-borrower-email"
+            className="sat-input mt-2 cursor-not-allowed bg-slate-50"
+            value={borrower.borrowerEmail}
+            readOnly
+          />
+          <span className="mt-1.5 block text-xs text-slate-500">
+            Your lender set this. Contact them if it is wrong.
+          </span>
+        </label>
+      )}
 
       <div>
         <span className="text-sm font-semibold text-slate-800">How do you make money?</span>
@@ -79,8 +96,8 @@ export default function StepProfile() {
             value={state.months === 24 ? 24 : 12}
             onChange={(e) => setMonths(parseInt(e.target.value, 10))}
           >
-            <option value={12}>12 months — microloans under $50K</option>
-            <option value={24}>24 months — loans over $50K</option>
+            <option value={12}>12 months, microloans under $50K</option>
+            <option value={24}>24 months, loans over $50K</option>
           </select>
           <span className="mt-1.5 block text-xs text-slate-500">
             Lenders ask for 12 months on a microloan under $50K, and 24 months once the request goes above $50K.

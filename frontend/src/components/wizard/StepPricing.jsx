@@ -24,7 +24,7 @@ export default function StepPricing() {
       setAiLabeled((m) => ({ ...m, [item.id]: true }));
       toast.success(`Suggested pricing for ${item.name}`);
     } catch (e) {
-      toast.error("Suggestion failed — enter the price manually");
+      toast.error("Suggestion failed, enter the price manually");
     } finally {
       setBusy(null);
     }
@@ -33,7 +33,7 @@ export default function StepPricing() {
   return (
     <div className="space-y-5">
       <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
-        Enter the price a customer pays for one unit — one bag, one hour, one job, one monthly plan. Not sure? Ask Sat for a
+        Enter the price a customer pays for one unit, one bag, one hour, one job, one monthly plan. Not sure? Ask Sat for a
         typical figure for your industry and adjust it.
       </p>
 

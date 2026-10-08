@@ -43,7 +43,7 @@ export default function StepCatalog() {
         })),
       });
       setAiLabeled(true);
-      toast.success("Suggested a starter catalogue — edit anything you like");
+      toast.success("Suggested a starter catalogue, edit anything you like");
     } catch (e) {
       toast.error("Could not generate suggestions. Add your items manually.");
     } finally {
@@ -56,7 +56,7 @@ export default function StepCatalog() {
       <div className="sat-card p-5">
         <span className="text-sm font-semibold text-slate-800">List what you sell</span>
         <p className="mt-1 text-xs text-slate-500">
-          One per line, or separate with commas. Products, services, packages — whatever you invoice for.
+          One per line, or separate with commas. Products, services, packages, whatever you invoice for.
         </p>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           <textarea

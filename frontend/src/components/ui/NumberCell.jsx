@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 
 /**
- * Numeric input that lets the user type freely — including leading "0",
- * trailing ".", and partially-written decimals — while still committing
+ * Numeric input that lets the user type freely, including leading "0",
+ * trailing ".", and partially-written decimals, while still committing
  * a parsed number to the shared state on every valid keystroke.
  *
  * Props:

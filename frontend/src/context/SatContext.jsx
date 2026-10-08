@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { computeTotals, emptyUnits, makeItem, uid } from "@/lib/model";
 
-const STORAGE_KEY = "sat-session-v1";
+const DEFAULT_STORAGE_KEY = "sat-session-v1";
 const SatCtx = createContext(null);
 
 export const CATEGORY_THRESHOLD = 10;
@@ -22,9 +22,9 @@ const defaultState = () => {
   };
 };
 
-const load = () => {
+const loadFromStorage = (key) => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (raw) return { ...defaultState(), ...JSON.parse(raw) };
   } catch (e) {
     /* ignore corrupt session */
@@ -32,12 +32,31 @@ const load = () => {
   return defaultState();
 };
 
-export const SatProvider = ({ children }) => {
-  const [state, setState] = useState(load);
+export const SatProvider = ({ children, persistKey = DEFAULT_STORAGE_KEY, initialState, onChange }) => {
+  const [state, setState] = useState(() => {
+    if (initialState) return { ...defaultState(), ...initialState };
+    if (persistKey) return loadFromStorage(persistKey);
+    return defaultState();
+  });
 
+  const onChangeRef = useRef(onChange);
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    onChangeRef.current = onChange;
+  });
+
+  const lastSyncedRef = useRef(null); // populated on mount with initial JSON
+  useEffect(() => {
+    const serialized = JSON.stringify(state);
+    if (lastSyncedRef.current === null) {
+      // First mount: record the hydrated snapshot without broadcasting.
+      lastSyncedRef.current = serialized;
+      return;
+    }
+    if (serialized === lastSyncedRef.current) return;
+    lastSyncedRef.current = serialized;
+    if (persistKey) localStorage.setItem(persistKey, serialized);
+    onChangeRef.current?.(state);
+  }, [state, persistKey]);
 
   const api = useMemo(() => {
     const update = (patch) => setState((s) => ({ ...s, ...patch }));

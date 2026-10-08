@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Send } from "lucide-react";
 import { Shell } from "@/components/Shell";
+import { SaveStatus } from "@/components/SaveStatus";
 import { useSat } from "@/context/SatContext";
+import { BorrowerCtx } from "@/context/BorrowerContext";
 import { num } from "@/lib/model";
 import StepProfile from "@/components/wizard/StepProfile";
 import StepCatalog from "@/components/wizard/StepCatalog";
@@ -13,18 +15,19 @@ import StepCosts from "@/components/wizard/StepCosts";
 import StepReview from "@/components/wizard/StepReview";
 
 const STEP_DEFS = [
-  { id: "profile", label: "Business", question: "First — who are we projecting for?", Comp: StepProfile },
+  { id: "profile", label: "Business", question: "First, who are we projecting for?", Comp: StepProfile },
   { id: "catalog", label: "What you sell", question: "What products or services do you sell?", Comp: StepCatalog },
   { id: "categories", label: "Grouping", question: "Let's group these into sales categories", Comp: StepCategories },
   { id: "pricing", label: "Prices", question: "What do you charge for each one?", Comp: StepPricing },
   { id: "volumes", label: "Volumes", question: "How many units do you expect to sell each month?", Comp: StepVolumes },
   { id: "costs", label: "Costs", question: "What does it cost you to deliver one unit?", Comp: StepCosts },
-  { id: "review", label: "Review", question: "Here's your snapshot — ready for your lender?", Comp: StepReview },
+  { id: "review", label: "Review", question: "Here's your snapshot, ready for your lender?", Comp: StepReview },
 ];
 
 export default function Wizard() {
   const navigate = useNavigate();
   const { state, update } = useSat();
+  const borrower = useContext(BorrowerCtx);
   const [stepId, setStepId] = useState("profile");
 
   const steps = STEP_DEFS;
@@ -32,6 +35,11 @@ export default function Wizard() {
   const idx = Math.max(0, steps.findIndex((s) => s.id === stepId));
   const step = steps[idx] ?? steps[0];
   const progress = ((idx + 1) / steps.length) * 100;
+
+  const borrowerSubmitBlocker =
+    borrower && step.id === "review" && !borrower.canSubmit
+      ? "Add at least one product or service with a price and units before submitting."
+      : null;
 
   const blocker = (() => {
     if (step.id === "profile" && !state.industry.trim()) return "Tell us your industry to continue";
@@ -44,12 +52,27 @@ export default function Wizard() {
     if (step.id === "pricing" && state.items.some((i) => num(i.price) <= 0)) return "Every item needs a sale price above $0";
     if (step.id === "volumes" && state.items.every((i) => i.units.every((u) => num(u) === 0)))
       return "Enter at least some monthly unit volumes";
+    if (borrowerSubmitBlocker) return borrowerSubmitBlocker;
     return null;
   })();
 
-  const next = () => {
+  const next = async () => {
     if (blocker) return;
+    if (borrower) borrower.flushNow?.();
     if (step.id === "review") {
+      if (borrower) {
+        if (!window.confirm(
+          "Submit to your lender? Once submitted, your answers will be visible to the lender and you will not be able to edit them.",
+        )) {
+          return;
+        }
+        try {
+          await borrower.submit();
+        } catch (e) {
+          // submitError is now set on the context; stay on this step so the message shows.
+        }
+        return;
+      }
       update({ completed: true });
       navigate("/results");
       return;
@@ -60,15 +83,30 @@ export default function Wizard() {
 
   const back = () => {
     if (idx === 0) {
-      navigate("/");
+      if (!borrower) navigate("/");
       return;
     }
+    if (borrower) borrower.flushNow?.();
     setStepId(steps[idx - 1].id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <Shell>
+    <Shell
+      showStartOver={!borrower}
+      right={borrower ? <SaveStatus status={borrower.saveStatus} /> : null}
+      banner={
+        borrower ? (
+          <div className="border-b border-slate-200 bg-[#f8fbf2]">
+            <div className="mx-auto max-w-5xl px-4 py-2 sm:px-6">
+              <p data-testid="borrower-link-note" className="text-xs text-[#3f6420]">
+                This is your private link. Save it to come back. Do not share it.
+              </p>
+            </div>
+          </div>
+        ) : null
+      }
+    >
       <div className="sticky top-16 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto max-w-5xl px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between gap-4">
@@ -115,6 +153,22 @@ export default function Wizard() {
           <div className="mt-8">
             <step.Comp />
           </div>
+          {borrower?.stale && (
+            <div
+              data-testid="borrower-stale-banner"
+              className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              This file has been submitted. Reload to see it.
+            </div>
+          )}
+          {borrower?.submitError && step.id === "review" && (
+            <div
+              data-testid="borrower-submit-error"
+              className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              {borrower.submitError}
+            </div>
+          )}
         </div>
       </main>
 
@@ -132,8 +186,17 @@ export default function Wizard() {
                 {blocker}
               </span>
             )}
-            <button data-testid="wizard-next-btn" onClick={next} disabled={!!blocker} className="sat-btn-primary shrink-0 px-6">
-              {step.id === "review" ? "Build my tables" : "Continue"} <ArrowRight size={16} />
+            <button
+              data-testid="wizard-next-btn"
+              onClick={next}
+              disabled={!!blocker || borrower?.stale}
+              className="sat-btn-primary shrink-0 px-6"
+            >
+              {step.id === "review"
+                ? borrower
+                  ? (<>Submit to lender <Send size={16} /></>)
+                  : (<>Build my tables <ArrowRight size={16} /></>)
+                : (<>Continue <ArrowRight size={16} /></>)}
             </button>
           </div>
         </div>

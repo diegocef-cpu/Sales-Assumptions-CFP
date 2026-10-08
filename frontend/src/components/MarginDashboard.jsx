@@ -125,7 +125,7 @@ export const MarginDashboard = () => {
 
         <div className="sat-card p-5 lg:col-span-2">
           <h3 className="font-display text-base font-bold text-slate-900">Monthly gross profit</h3>
-          <p className="mt-0.5 text-xs text-slate-500">Revenue less direct costs — the cash your lender models from</p>
+          <p className="mt-0.5 text-xs text-slate-500">Revenue less direct costs, the cash your lender models from</p>
           <div className="mt-5 h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthly} margin={{ left: -12, right: 8, top: 4 }}>

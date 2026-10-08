@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,15 @@ import os
 import re
 import json
 import uuid
+import secrets
+import hmac
+import time
 import logging
+from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from fastapi.responses import StreamingResponse
@@ -226,7 +231,260 @@ async def export_xlsx(req: ExportRequest):
     )
 
 
+# --------------------------------------------------------------------------
+# Borrower files: lender creates a private file, borrower fills it in.
+# Three personas live in strictly separate code paths from the practice demo.
+# --------------------------------------------------------------------------
+
+ADMIN_PASSCODE = os.environ.get("SAT_ADMIN_PASSCODE") or "sat-lender-2026"
+MAX_STATE_BYTES = 1_000_000
+RATE_LIMIT_FAILS_PER_HOUR = 10
+_fail_attempts: Dict[str, List[float]] = defaultdict(list)
+
+NOT_FOUND = HTTPException(status_code=404, detail="This link is not valid")
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _check_rate_limit(ip: str) -> None:
+    now = time.time()
+    recent = [t for t in _fail_attempts[ip] if now - t < 3600]
+    _fail_attempts[ip] = recent
+    if len(recent) >= RATE_LIMIT_FAILS_PER_HOUR:
+        raise HTTPException(status_code=429, detail="Too many attempts, try again later")
+
+
+def _record_fail(ip: str) -> None:
+    _fail_attempts[ip].append(time.time())
+
+
+def require_admin(request: Request) -> bool:
+    ip = _client_ip(request)
+    _check_rate_limit(ip)
+    header = request.headers.get("x-admin-passcode", "")
+    if not hmac.compare_digest(header, ADMIN_PASSCODE):
+        _record_fail(ip)
+        raise HTTPException(status_code=401, detail="Invalid passcode")
+    return True
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _to_out(doc: Dict[str, Any], include_state: bool, borrower_view: bool = False) -> Dict[str, Any]:
+    out = {
+        "id": doc["_id"],
+        "business_name": doc.get("business_name", ""),
+        "owner_name": doc.get("owner_name", ""),
+        "borrower_email": doc.get("borrower_email", ""),
+        "status": doc.get("status", "not_started"),
+        "needs_review": doc.get("needs_review", False),
+        "created_at": doc.get("created_at"),
+        "first_opened_at": doc.get("first_opened_at"),
+        "last_saved_at": doc.get("last_saved_at"),
+        "submitted_at": doc.get("submitted_at"),
+        "last_submitted_at": doc.get("last_submitted_at"),
+        "reopened_at": doc.get("reopened_at"),
+    }
+    if not borrower_view:
+        out["token"] = doc.get("token")
+    if include_state:
+        out["state"] = doc.get("state", {})
+    return out
+
+
+def _submit_valid(state: Dict[str, Any]) -> bool:
+    for i in (state.get("items") or []):
+        name = (i.get("name") or "").strip()
+        try:
+            price = float(i.get("price") or 0)
+        except (TypeError, ValueError):
+            price = 0.0
+        units = i.get("units") or []
+        has_units = False
+        for u in units:
+            try:
+                if float(u or 0) > 0:
+                    has_units = True
+                    break
+            except (TypeError, ValueError):
+                continue
+        if name and price > 0 and has_units:
+            return True
+    return False
+
+
+class BorrowerFileCreate(BaseModel):
+    business_name: str
+    owner_name: Optional[str] = ""
+    borrower_email: str
+
+
+class BorrowerFileSave(BaseModel):
+    state: Dict[str, Any]
+    business_name_override: Optional[str] = None
+
+
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+@api_router.post("/admin/auth/check")
+async def admin_auth_check(request: Request):
+    require_admin(request)
+    return {"ok": True}
+
+
+@api_router.get("/admin/files")
+async def admin_list_files(request: Request):
+    require_admin(request)
+    out: List[Dict[str, Any]] = []
+    async for doc in db.borrower_files.find({}).sort("created_at", -1):
+        out.append(_to_out(doc, include_state=False))
+    return out
+
+
+@api_router.post("/admin/files")
+async def admin_create_file(request: Request, body: BorrowerFileCreate):
+    require_admin(request)
+    bn = (body.business_name or "").strip()
+    email = (body.borrower_email or "").strip()
+    if not bn:
+        raise HTTPException(400, "Business name is required")
+    if not _EMAIL_RE.match(email):
+        raise HTTPException(400, "Enter a valid email address")
+    now = _now_iso()
+    doc = {
+        "_id": str(uuid.uuid4()),
+        "token": secrets.token_urlsafe(28),
+        "business_name": bn,
+        "owner_name": (body.owner_name or "").strip(),
+        "borrower_email": email,
+        "status": "not_started",
+        "needs_review": False,
+        "state": {"businessName": bn, "borrowerEmail": email},
+        "created_at": now,
+        "first_opened_at": None,
+        "last_saved_at": None,
+        "submitted_at": None,
+        "last_submitted_at": None,
+        "reopened_at": None,
+    }
+    await db.borrower_files.insert_one(doc)
+    return _to_out(doc, include_state=False)
+
+
+@api_router.post("/admin/files/{file_id}/mark-reviewed")
+async def admin_mark_reviewed(request: Request, file_id: str):
+    require_admin(request)
+    r = await db.borrower_files.update_one({"_id": file_id}, {"$set": {"needs_review": False}})
+    if not r.matched_count:
+        raise HTTPException(404, "File not found")
+    return {"ok": True}
+
+
+@api_router.post("/admin/files/{file_id}/reopen")
+async def admin_reopen(request: Request, file_id: str):
+    require_admin(request)
+    now = _now_iso()
+    r = await db.borrower_files.update_one(
+        {"_id": file_id, "status": "submitted"},
+        {"$set": {"status": "in_progress", "reopened_at": now, "needs_review": False}},
+    )
+    if not r.matched_count:
+        raise HTTPException(404, "Not a submitted file")
+    return {"ok": True, "reopened_at": now}
+
+
+@api_router.get("/borrower/{token}")
+async def borrower_get(token: str):
+    doc = await db.borrower_files.find_one({"token": token})
+    if not doc:
+        raise NOT_FOUND
+    return _to_out(doc, include_state=True, borrower_view=True)
+
+
+@api_router.put("/borrower/{token}")
+async def borrower_save(token: str, body: BorrowerFileSave):
+    try:
+        payload_size = len(json.dumps(body.state).encode("utf-8"))
+    except (TypeError, ValueError):
+        raise HTTPException(400, "Invalid state payload")
+    if payload_size > MAX_STATE_BYTES:
+        raise HTTPException(413, "Saved state is too large")
+    doc = await db.borrower_files.find_one({"token": token})
+    if not doc:
+        raise NOT_FOUND
+    if doc.get("status") == "submitted":
+        raise HTTPException(status_code=403, detail={"code": "already_submitted"})
+    now = _now_iso()
+    updates: Dict[str, Any] = {
+        "state": body.state,
+        "last_saved_at": now,
+    }
+    if doc.get("status") == "not_started":
+        updates["status"] = "in_progress"
+    if not doc.get("first_opened_at"):
+        updates["first_opened_at"] = now
+    bn = (body.business_name_override or "").strip()
+    if bn:
+        updates["business_name"] = bn
+    await db.borrower_files.update_one({"_id": doc["_id"]}, {"$set": updates})
+    merged = {**doc, **updates}
+    return _to_out(merged, include_state=False, borrower_view=True)
+
+
+@api_router.post("/borrower/{token}/submit")
+async def borrower_submit(token: str):
+    doc = await db.borrower_files.find_one({"token": token})
+    if not doc:
+        raise NOT_FOUND
+    if doc.get("status") == "submitted":
+        raise HTTPException(409, "Already submitted")
+    if not _submit_valid(doc.get("state") or {}):
+        raise HTTPException(
+            400,
+            "Add at least one product or service with a price and units before submitting.",
+        )
+    now = _now_iso()
+    await db.borrower_files.update_one(
+        {"_id": doc["_id"]},
+        {"$set": {
+            "status": "submitted",
+            "submitted_at": now,
+            "last_submitted_at": now,
+            "needs_review": True,
+        }},
+    )
+    return {"ok": True, "submitted_at": now}
+
+
 app.include_router(api_router)
+
+
+@app.middleware("http")
+async def privacy_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/api/borrower") or path.startswith("/api/admin"):
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+        response.headers["Referrer-Policy"] = "no-referrer"
+    return response
+
+
+@app.on_event("startup")
+async def _ensure_indexes():
+    try:
+        await db.borrower_files.create_index("token", unique=True)
+        await db.borrower_files.create_index("status")
+    except Exception as e:
+        logger.warning("Could not ensure borrower_files indexes: %s", e)
+
 
 app.add_middleware(
     CORSMiddleware,

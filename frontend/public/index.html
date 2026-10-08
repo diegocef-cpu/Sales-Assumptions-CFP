@@ -39,7 +39,14 @@
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
         <script>
-            !(function (t, e) {
+            (function () {
+                var p = window.location.pathname || "";
+                var isPrivate =
+                    p.indexOf("/b/") === 0 ||
+                    p === "/lender" ||
+                    p.indexOf("/lender/") === 0;
+                if (isPrivate) return;
+                !(function (t, e) {
                 var o, n, p, r;
                 e.__SV ||
                     ((window.posthog = e),
@@ -100,14 +107,15 @@
                     }),
                     (e.__SV = 1));
             })(document, window.posthog || []);
-            posthog.init("phc_DbsPb39SRc8z3EiQ6Dhj6ikv4H4rTKcht9d4sZSesceP", {
-                api_host: "https://ap.emergent.sh",
-                person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well,
-                session_recording: {
-                    recordCrossOriginIframes: true,
-                    capturePerformance: false,
-                },
-            });
+                posthog.init("phc_DbsPb39SRc8z3EiQ6Dhj6ikv4H4rTKcht9d4sZSesceP", {
+                    api_host: "https://ap.emergent.sh",
+                    person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well,
+                    session_recording: {
+                        recordCrossOriginIframes: true,
+                        capturePerformance: false,
+                    },
+                });
+            })();
         </script>
     </body>
 </html>
