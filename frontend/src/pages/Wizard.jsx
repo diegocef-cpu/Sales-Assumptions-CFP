@@ -123,13 +123,16 @@ export default function Wizard() {
           <button data-testid="wizard-back-btn" onClick={back} className="sat-btn-ghost">
             <ArrowLeft size={16} /> Back
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
             {blocker && (
-              <span data-testid="wizard-blocker-msg" className="hidden text-xs font-medium text-amber-600 sm:inline">
+              <span
+                data-testid="wizard-blocker-msg"
+                className="min-w-0 flex-1 text-right text-xs font-medium leading-snug text-amber-600 sm:flex-none sm:text-left"
+              >
                 {blocker}
               </span>
             )}
-            <button data-testid="wizard-next-btn" onClick={next} disabled={!!blocker} className="sat-btn-primary px-6">
+            <button data-testid="wizard-next-btn" onClick={next} disabled={!!blocker} className="sat-btn-primary shrink-0 px-6">
               {step.id === "review" ? "Build my tables" : "Continue"} <ArrowRight size={16} />
             </button>
           </div>

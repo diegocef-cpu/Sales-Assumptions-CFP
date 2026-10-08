@@ -19,8 +19,10 @@ export default function StepCategories() {
   };
 
   const runSuggest = async () => {
-    const names = state.items.map((i) => i.name.trim()).filter(Boolean);
-    if (!names.length) {
+    const items = state.items
+      .map((i) => ({ id: i.id, name: i.name.trim() }))
+      .filter((i) => i.name);
+    if (!items.length) {
       toast.error("Add some items on the previous step first");
       return;
     }
@@ -32,11 +34,11 @@ export default function StepCategories() {
       const data = await suggestCategories({
         industry: state.industry,
         businessModel: state.businessModel,
-        items: names,
+        items,
       });
       applyCategorySuggestion({ categories: data.categories, assignments: data.assignments });
       setAiLabeled(true);
-      toast.success("Suggested categories — review and edit as needed");
+      toast.success("Suggested categories, review and edit as needed");
     } catch (e) {
       toast.error("Could not generate suggestions. Name your categories below.");
     } finally {

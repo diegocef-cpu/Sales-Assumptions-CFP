@@ -107,7 +107,7 @@ export const SatProvider = ({ children }) => {
         const cats = names.map((n) => ({ id: uid(), name: n }));
         const byName = new Map(cats.map((c) => [c.name, c.id]));
         const items = s.items.map((it) => {
-          const target = assignments?.[it.name];
+          const target = assignments?.[it.id];
           const cid = (target && byName.get(target)) || cats[0].id;
           return { ...it, categoryId: cid };
         });

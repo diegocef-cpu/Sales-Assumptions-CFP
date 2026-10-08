@@ -69,15 +69,20 @@ class AssumptionResponse(BaseModel):
     source: Optional[str] = None
 
 
+class CategoryItem(BaseModel):
+    id: str
+    name: str
+
+
 class CategoriesRequest(BaseModel):
     industry: str
     business_model: Optional[str] = "mixed"
-    items: List[str]
+    items: List[CategoryItem]
 
 
 class CategoriesResponse(BaseModel):
     categories: List[str]
-    assignments: Dict[str, str]
+    assignments: Dict[str, str]  # keyed by item id
 
 
 def _extract_json(text: str) -> dict:
@@ -180,19 +185,21 @@ async def suggest_assumptions(req: AssumptionRequest):
 
 @api_router.post("/ai/suggest-categories", response_model=CategoriesResponse)
 async def suggest_categories(req: CategoriesRequest):
-    names = [n for n in (s.strip() for s in req.items) if n]
-    if not names:
+    cleaned = [(it.id, it.name.strip()) for it in req.items if it.name and it.name.strip()]
+    if not cleaned:
         raise HTTPException(status_code=400, detail="At least one item name is required")
-    count_rule = "1 or 2 categories" if len(names) <= 3 else "2 to 4 categories"
+    count_rule = "1 or 2 categories" if len(cleaned) <= 3 else "2 to 4 categories"
+    items_payload = [{"id": iid, "name": name} for iid, name in cleaned]
     prompt = (
         f"Industry: {req.industry}\nBusiness model: {req.business_model}\n"
-        f"Items the owner sells: {json.dumps(names)}\n\n"
+        f"Items the owner sells (each has an id, which may repeat the same name across different ids): "
+        f"{json.dumps(items_payload)}\n\n"
         f"Group these items into {count_rule}. Use short, simple customer-facing "
         "category names (for example a restaurant with Tacos and Ice cream would use "
-        '"Entrees" and "Desserts"). Every item must be assigned to one of the categories '
-        "you return.\n"
+        '"Entrees" and "Desserts"). Every id must be assigned to one of the categories '
+        "you return. Two items with the same name may land in the same category, that is fine.\n"
         'Return JSON exactly shaped as: {"categories": ["Name A", "Name B"], '
-        '"assignments": {"<item name>": "<category name>"}}'
+        '"assignments": {"<item id>": "<category name>"}}'
     )
     data = await _ask_json(SYSTEM, prompt)
     cats = [str(c).strip() for c in (data.get("categories") or []) if str(c).strip()]
@@ -200,11 +207,11 @@ async def suggest_categories(req: CategoriesRequest):
         raise HTTPException(status_code=502, detail="Could not generate categories")
     raw_assign = data.get("assignments") or {}
     assignments: Dict[str, str] = {}
-    for n in names:
-        chosen = str(raw_assign.get(n, "")).strip()
+    for iid, _name in cleaned:
+        chosen = str(raw_assign.get(iid, "")).strip()
         if chosen not in cats:
             chosen = cats[0]
-        assignments[n] = chosen
+        assignments[iid] = chosen
     return CategoriesResponse(categories=cats, assignments=assignments)
 
 
