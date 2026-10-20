@@ -299,6 +299,7 @@ def _to_out(doc: Dict[str, Any], include_state: bool, borrower_view: bool = Fals
         "submitted_at": doc.get("submitted_at"),
         "last_submitted_at": doc.get("last_submitted_at"),
         "reopened_at": doc.get("reopened_at"),
+        "reviewed_at": doc.get("reviewed_at"),
     }
     if not borrower_view:
         out["token"] = doc.get("token")
@@ -382,18 +383,32 @@ async def admin_create_file(request: Request, body: BorrowerFileCreate):
         "submitted_at": None,
         "last_submitted_at": None,
         "reopened_at": None,
+        "reviewed_at": None,
     }
     await db.borrower_files.insert_one(doc)
     return _to_out(doc, include_state=False)
 
 
+@api_router.get("/admin/files/{file_id}")
+async def admin_get_file(request: Request, file_id: str):
+    require_admin(request)
+    doc = await db.borrower_files.find_one({"_id": file_id})
+    if not doc:
+        raise HTTPException(404, "File not found")
+    return _to_out(doc, include_state=True)
+
+
 @api_router.post("/admin/files/{file_id}/mark-reviewed")
 async def admin_mark_reviewed(request: Request, file_id: str):
     require_admin(request)
-    r = await db.borrower_files.update_one({"_id": file_id}, {"$set": {"needs_review": False}})
+    now = _now_iso()
+    r = await db.borrower_files.update_one(
+        {"_id": file_id},
+        {"$set": {"needs_review": False, "reviewed_at": now}},
+    )
     if not r.matched_count:
         raise HTTPException(404, "File not found")
-    return {"ok": True}
+    return {"ok": True, "reviewed_at": now}
 
 
 @api_router.post("/admin/files/{file_id}/reopen")
@@ -402,7 +417,12 @@ async def admin_reopen(request: Request, file_id: str):
     now = _now_iso()
     r = await db.borrower_files.update_one(
         {"_id": file_id, "status": "submitted"},
-        {"$set": {"status": "in_progress", "reopened_at": now, "needs_review": False}},
+        {"$set": {
+            "status": "in_progress",
+            "reopened_at": now,
+            "needs_review": False,
+            "reviewed_at": None,
+        }},
     )
     if not r.matched_count:
         raise HTTPException(404, "Not a submitted file")
@@ -467,6 +487,7 @@ async def borrower_submit(token: str):
             "submitted_at": now,
             "last_submitted_at": now,
             "needs_review": True,
+            "reviewed_at": None,
         }},
     )
     return {"ok": True, "submitted_at": now}

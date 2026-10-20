@@ -93,3 +93,11 @@ Build a web app that guides business owners through inputting sales and cost ass
 - **No em-dashes** across any user-visible text (home, wizard, Results, lender, borrower).
 - **No autosave on bare load**: file remains `not_started` with `first_opened_at=null` until the first real user edit.
 - **Admin passcode**: set in the `SAT_ADMIN_PASSCODE` environment variable (`/app/backend/.env`). If unset or empty, every admin route returns `503 Admin access is not configured`.
+
+## Fixed 2026-10-08: Lender file view (phase 1.5)
+- **New backend route** `GET /api/admin/files/{id}` returns the full file including saved wizard state. Uses `require_admin`, writes nothing (verified: three consecutive GETs leave `first_opened_at=null`, `last_saved_at=null`, `status=not_started`).
+- Added `reviewed_at` timestamp: set by `mark-reviewed`, cleared by `reopen` and by every borrower submit. `reopen` keeps `submitted_at` as history, sets `reopened_at`, clears `reviewed_at` and `needs_review`.
+- **`/admin` routes**: `AdminShell` holds the passcode in component memory only; `/admin` and `/admin/files/:id` share one unlock. Refresh asks again. `/lender` now redirects to `/admin`. PostHog gate in `index.html` skips `/admin*` as well.
+- **Dashboard rows**: Mark reviewed and Reopen moved to the file page. Each row keeps Copy link + the new View button; filters, needs-review chip, row tint, and count are unchanged.
+- **File page** (`AdminFilePage`): Back-to-list link, header with status chip plus "Submitted on", "Reopened", "Reviewed on" markers as applicable; review actions when status=`submitted` (Mark reviewed + Reopen with the confirmation text "Reopen this file? The borrower will be able to edit it again. Their current answers stay."); when not submitted, both buttons hidden and a note shows "Not submitted yet. This is the borrower's current progress.". Below the header: MarginDashboard, borrower notes card (if any), Sales + Cost `AssumptionTable` rendered read-only (via `BorrowerCtx` with `readOnly=true`, 0 `<input>` elements in tables), and Sales CSV / Costs CSV / Both tables / Excel workbook downloads built from the file's saved state and notes.
+- No em-dashes in any new text.

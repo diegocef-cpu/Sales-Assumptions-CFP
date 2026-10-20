@@ -14,6 +14,11 @@ export const listFiles = async (passcode) => {
   return data;
 };
 
+export const getFile = async (passcode, fileId) => {
+  const { data } = await axios.get(`${API}/admin/files/${fileId}`, { headers: headers(passcode) });
+  return data;
+};
+
 export const createFile = async (passcode, body) => {
   const { data } = await axios.post(`${API}/admin/files`, body, { headers: headers(passcode) });
   return data;

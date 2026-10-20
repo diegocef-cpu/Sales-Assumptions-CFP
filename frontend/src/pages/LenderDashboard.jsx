@@ -1,15 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, Copy, CheckCircle2, RefreshCw, Plus } from "lucide-react";
+import { Loader2, Copy, CheckCircle2, RefreshCw, Plus, Eye } from "lucide-react";
 import { Shell } from "@/components/Shell";
-import { usePrivatePage } from "@/hooks/usePrivatePage";
-import {
-  checkPasscode,
-  listFiles,
-  createFile as createFileApi,
-  markReviewed as markReviewedApi,
-  reopenFile as reopenFileApi,
-} from "@/lib/admin";
+import { useAdminAuth } from "@/pages/AdminShell";
+import { listFiles, createFile as createFileApi } from "@/lib/admin";
 
 const STATUS_LABEL = {
   not_started: "Not started",
@@ -37,87 +32,22 @@ const fmtDate = (iso) => {
 
 const submittedCell = (f) => {
   if (f.status === "submitted") return fmtDate(f.last_submitted_at || f.submitted_at);
-  if (f.status === "in_progress" && f.reopened_at && (!f.last_submitted_at || f.reopened_at > f.last_submitted_at)) {
+  if (
+    f.status === "in_progress" &&
+    f.reopened_at &&
+    (!f.last_submitted_at || f.reopened_at > f.last_submitted_at)
+  ) {
     return `Reopened ${fmtDate(f.reopened_at)}`;
   }
   return "";
 };
 
 export default function LenderDashboard() {
-  usePrivatePage();
-  const [passcode, setPasscode] = useState("");
-  const [authed, setAuthed] = useState(false);
-
-  if (!authed) {
-    return (
-      <Shell showStartOver={false}>
-        <PasscodeGate
-          passcode={passcode}
-          setPasscode={setPasscode}
-          onAuthed={() => setAuthed(true)}
-        />
-      </Shell>
-    );
-  }
+  const { passcode } = useAdminAuth();
   return (
     <Shell showStartOver={false}>
       <Dashboard passcode={passcode} />
     </Shell>
-  );
-}
-
-function PasscodeGate({ passcode, setPasscode, onAuthed }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!passcode) return;
-    setBusy(true);
-    setErr("");
-    try {
-      await checkPasscode(passcode);
-      onAuthed();
-    } catch (e) {
-      const code = e?.response?.status;
-      if (code === 429) setErr("Too many attempts. Try again later.");
-      else setErr("That passcode did not match. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <main className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md items-center px-4">
-      <form onSubmit={submit} className="sat-card w-full p-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">Lender passcode</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Enter the shared passcode to open the lender dashboard. A refresh will ask for it again.
-        </p>
-        <label className="mt-5 block">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Passcode</span>
-          <input
-            data-testid="lender-passcode-input"
-            type="password"
-            autoFocus
-            className="sat-input mt-2"
-            value={passcode}
-            onChange={(e) => setPasscode(e.target.value)}
-          />
-        </label>
-        {err && (
-          <p data-testid="lender-passcode-error" className="mt-3 text-xs text-amber-700">
-            {err}
-          </p>
-        )}
-        <button
-          data-testid="lender-passcode-submit"
-          type="submit"
-          disabled={busy || !passcode}
-          className="sat-btn-primary mt-5 w-full"
-        >
-          {busy ? <Loader2 size={14} className="animate-spin" /> : null} Continue
-        </button>
-      </form>
-    </main>
   );
 }
 
@@ -152,7 +82,6 @@ function Dashboard({ passcode }) {
       if (filter === "needs_review") return f.needs_review;
       return f.status === filter;
     });
-    // Needs-review rows float to the top (then by created_at desc).
     return [...list].sort((a, b) => {
       if (a.needs_review !== b.needs_review) return a.needs_review ? -1 : 1;
       return (b.created_at || "").localeCompare(a.created_at || "");
@@ -232,14 +161,7 @@ function Dashboard({ passcode }) {
               </tr>
             )}
             {visible.map((f) => (
-              <FileRow
-                key={f.id}
-                file={f}
-                passcode={passcode}
-                onUpdated={(patch) =>
-                  setFiles((prev) => prev.map((p) => (p.id === f.id ? { ...p, ...patch } : p)))
-                }
-              />
+              <FileRow key={f.id} file={f} />
             ))}
           </tbody>
         </table>
@@ -364,10 +286,10 @@ function NewLink({ file, onDismiss }) {
   );
 }
 
-function FileRow({ file: f, passcode, onUpdated }) {
+function FileRow({ file: f }) {
+  const navigate = useNavigate();
   const url = `${window.location.origin}/b/${f.token}`;
   const [copied, setCopied] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   const copy = async () => {
     try {
@@ -376,31 +298,6 @@ function FileRow({ file: f, passcode, onUpdated }) {
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
       toast.error("Copy failed");
-    }
-  };
-  const onMarkReviewed = async () => {
-    setBusy(true);
-    try {
-      await markReviewedApi(passcode, f.id);
-      onUpdated({ needs_review: false });
-      toast.success("Marked reviewed");
-    } catch (e) {
-      toast.error("Could not update");
-    } finally {
-      setBusy(false);
-    }
-  };
-  const onReopen = async () => {
-    if (!window.confirm("Reopen this file? The borrower can edit it again.")) return;
-    setBusy(true);
-    try {
-      const r = await reopenFileApi(passcode, f.id);
-      onUpdated({ status: "in_progress", needs_review: false, reopened_at: r.reopened_at });
-      toast.success("File reopened");
-    } catch (e) {
-      toast.error("Could not reopen");
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -442,28 +339,13 @@ function FileRow({ file: f, passcode, onUpdated }) {
         </button>
       </td>
       <td className="px-5 py-3 align-top text-right">
-        <div className="flex flex-wrap justify-end gap-2">
-          {f.needs_review && (
-            <button
-              data-testid={`mark-reviewed-${f.id}`}
-              onClick={onMarkReviewed}
-              disabled={busy}
-              className="sat-chip py-1 text-[11px]"
-            >
-              Mark reviewed
-            </button>
-          )}
-          {f.status === "submitted" && (
-            <button
-              data-testid={`reopen-${f.id}`}
-              onClick={onReopen}
-              disabled={busy}
-              className="sat-chip py-1 text-[11px]"
-            >
-              Reopen
-            </button>
-          )}
-        </div>
+        <button
+          data-testid={`view-file-${f.id}`}
+          onClick={() => navigate(`/admin/files/${f.id}`)}
+          className="sat-btn-primary py-1 text-[11px]"
+        >
+          <Eye size={12} /> View
+        </button>
       </td>
     </tr>
   );

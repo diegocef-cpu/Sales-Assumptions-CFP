@@ -44,7 +44,9 @@
                 var isPrivate =
                     p.indexOf("/b/") === 0 ||
                     p === "/lender" ||
-                    p.indexOf("/lender/") === 0;
+                    p.indexOf("/lender/") === 0 ||
+                    p === "/admin" ||
+                    p.indexOf("/admin/") === 0;
                 if (isPrivate) return;
                 !(function (t, e) {
                 var o, n, p, r;
