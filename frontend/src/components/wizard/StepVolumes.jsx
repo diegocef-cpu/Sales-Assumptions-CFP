@@ -50,7 +50,6 @@ export default function StepVolumes() {
         price: num(item.price),
       });
       if (data.units?.length) setUnits(item.id, data.units);
-      if (num(item.unitCost) === 0 && data.unit_cost) updateItem(item.id, { unitCost: data.unit_cost });
       setAiLabeled((m) => ({ ...m, [item.id]: true }));
       toast.success(data.note || `Suggested monthly volumes for ${item.name}`);
     } catch (e) {

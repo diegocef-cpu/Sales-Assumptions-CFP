@@ -6,7 +6,7 @@ import { suggestAssumptions } from "@/lib/api";
 import { NumberCell } from "@/components/ui/NumberCell";
 
 export default function StepPricing() {
-  const { state, updateItem, setUnits } = useSat();
+  const { state, updateItem } = useSat();
   const [busy, setBusy] = useState(null);
   const [aiLabeled, setAiLabeled] = useState({});
 
@@ -19,10 +19,9 @@ export default function StepPricing() {
         itemName: item.name,
         months: state.months,
       });
-      updateItem(item.id, { price: data.price, unitCost: data.unit_cost });
-      if (data.units?.length) setUnits(item.id, data.units);
+      updateItem(item.id, { price: data.price });
       setAiLabeled((m) => ({ ...m, [item.id]: true }));
-      toast.success(`Suggested pricing for ${item.name}`);
+      toast.success(`Suggested price for ${item.name}`);
     } catch (e) {
       toast.error("Suggestion failed, enter the price manually");
     } finally {
